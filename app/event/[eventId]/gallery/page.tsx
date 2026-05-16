@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useAction, useMutation, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery, useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { getGuestId } from "@/app/lib/utils";
 import Image from "next/image";
@@ -28,6 +28,7 @@ export default function GalleryPage() {
   const { eventId } = useParams() as { eventId: string };
   const router = useRouter();
   const guestId = getGuestId();
+  const { isAuthenticated } = useConvexAuth();
 
   const photos = useQuery(api.photos.getPhotos, { eventId });
   const event = useQuery(api.events.getEventBySlug, { slug: eventId });
@@ -89,13 +90,13 @@ export default function GalleryPage() {
   }, [event?.endsAt]);
 
   return (
-    <main className="flex-1 flex flex-col bg-black text-white relative min-h-[100dvh] overflow-y-auto custom-scrollbar">
+    <main className="flex-1 flex flex-col bg-black text-white relative h-dvh overflow-y-auto custom-scrollbar">
       <div className="grain-overlay pointer-events-none" />
 
       {/* Top Bar */}
       <nav className="flex items-center justify-between px-6 py-6 z-20">
         <button
-          onClick={() => router.push("/")}
+          onClick={() => router.push(isAuthenticated ? "/dashboard" : "/")}
           className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 border border-white/5"
         >
           <ArrowLeft className="w-5 h-5 text-white/60" />

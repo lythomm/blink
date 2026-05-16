@@ -20,11 +20,11 @@ export const getEvent = query({
 });
 
 export const createEvent = mutation({
-  args: { 
-    name: v.string(), 
-    slug: v.string(), 
+  args: {
+    name: v.string(),
+    slug: v.string(),
     endsAt: v.number(),
-    maxPhotosPerParticipant: v.number() 
+    maxPhotosPerParticipant: v.number(),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -32,14 +32,17 @@ export const createEvent = mutation({
       throw new Error("Vous devez être connecté pour créer un événement.");
     }
 
-    const slug = args.slug.toLowerCase().trim().replace(/\s+/g, "-");
-    
+    const slug = args.slug.toLowerCase().trim().replace(/\s+/g, "");
+    if (slug.length < 4 || slug.length > 16) {
+      throw new Error("Le code doit faire entre 4 et 16 caractères.");
+    }
+
     // Check if slug already exists
     const existing = await ctx.db
       .query("events")
       .withIndex("by_slug", (q) => q.eq("slug", slug))
       .unique();
-    
+
     if (existing) {
       throw new Error("Cet identifiant d'événement est déjà utilisé.");
     }
@@ -66,7 +69,7 @@ export const joinEvent = mutation({
     const existing = await ctx.db
       .query("participants")
       .withIndex("by_event_and_guest", (q) =>
-        q.eq("eventId", args.eventId).eq("guestId", args.guestId)
+        q.eq("eventId", args.eventId).eq("guestId", args.guestId),
       )
       .unique();
 
@@ -88,5 +91,39 @@ export const getParticipantCount = query({
       .withIndex("by_event", (q) => q.eq("eventId", args.eventId))
       .collect();
     return participants.length;
+  },
+});
+
+export const listUserEvents = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+
+    const events = await ctx.db
+      .query("events")
+      .withIndex("by_creator", (q) => q.eq("creatorId", userId))
+      .order("desc")
+      .collect();
+
+    return await Promise.all(
+      events.map(async (event) => {
+        const photos = await ctx.db
+          .query("photos")
+          .withIndex("by_event_and_guest", (q) => q.eq("eventId", event.slug))
+          .collect();
+
+        const participants = await ctx.db
+          .query("participants")
+          .withIndex("by_event", (q) => q.eq("eventId", event.slug))
+          .collect();
+
+        return {
+          ...event,
+          photoCount: photos.length,
+          participantCount: participants.length,
+        };
+      }),
+    );
   },
 });

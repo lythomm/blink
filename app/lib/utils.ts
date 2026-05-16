@@ -42,3 +42,19 @@ export const getGuestId = () => {
   }
   return guestId;
 };
+
+export const prettyDisplayDate = (dateStr: string) => {
+  if (!dateStr) return "";
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return "";
+  
+  const formatted = new Intl.DateTimeFormat("fr-FR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+  
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+};

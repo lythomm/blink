@@ -7,7 +7,7 @@
   --color-surface: #111111;
   --color-primary: #FFFFFF;
   --color-secondary: #B3B3B3;
-  --color-tertiary: #E87D3E;
+  --color-tertiary: #FFFFFF;
   --color-border: #374151;
   --color-muted: #6B7280;
   --color-error: #FF5A5F;
@@ -55,11 +55,23 @@ h1, h2, h3 {
 
 @layer components {
   .btn-once-primary {
-    @apply h-[58px] px-8 bg-white text-black font-bold uppercase tracking-[0.1em] text-[12px] rounded-[20px] transition-all duration-500 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] active:scale-[0.98];
+    @apply h-[54px] px-8 bg-white text-black font-bold tracking-tight text-[14px] rounded-full transition-all duration-500 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] active:scale-[0.98] flex items-center gap-2;
   }
   
   .btn-once-secondary {
-    @apply h-[58px] px-8 border border-white/20 text-white font-bold uppercase tracking-[0.1em] text-[12px] rounded-[20px] transition-all duration-500 hover:bg-white/5 active:scale-[0.98];
+    @apply h-[54px] px-8 border border-white/20 text-white font-bold tracking-tight text-[14px] rounded-full transition-all duration-500 hover:bg-white/5 active:scale-[0.98] flex items-center gap-2;
+  }
+
+  .blink-input {
+    @apply w-full h-[70px] bg-white/[0.03] border border-white/5 rounded-[22px] px-6 text-[15px] font-body placeholder:text-white/20 focus:outline-none focus:border-white/10 focus:bg-white/[0.05] transition-all duration-300;
+  }
+
+  .blink-choice {
+    @apply h-14 rounded-2xl border flex items-center justify-center text-sm font-bold transition-all duration-300 bg-white/[0.03] border-white/5 text-white/40 hover:border-white/20;
+  }
+  
+  .blink-choice-selected {
+    @apply bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.2)] text-black;
   }
 
   .cinematic-overlay {

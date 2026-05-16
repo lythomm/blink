@@ -4,118 +4,47 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { MoveRight, Plus, ScanLine } from "lucide-react";
+import { MoveRight, ScanLine } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 import { getGuestId } from "@/app/lib/utils";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useConvexAuth } from "convex/react";
-import { LogOut, User as UserIcon } from "lucide-react";
+
 
 export default function HomePage() {
   const router = useRouter();
   const [mode, setMode] = useState<"join" | "create">("join");
   const [slug, setSlug] = useState("");
-  const [name, setName] = useState("");
-  const [endDateTime, setEndDateTime] = useState("");
-  const [maxPhotos, setMaxPhotos] = useState(10);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   
   // Auth state
   const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
-  const { signIn, signOut } = useAuthActions();
+  const { signIn } = useAuthActions();
   const [authStep, setAuthStep] = useState<"signIn" | "signUp">("signIn");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [userName, setUserName] = useState("");
 
   const existingEvent = useQuery(api.events.getEventBySlug, { slug });
-  const user = useQuery(api.users.current);
-
-  const handleAction = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    
-    // Initialize endDateTime to 2 hours from now if empty
-    if (mode === "create" && !endDateTime) {
-      const now = new Date();
-      now.setHours(now.getHours() + 2);
-      setEndDateTime(now.toISOString().slice(0, 16));
-    }
-
-    if (mode === "join") {
-      if (!slug) return;
-      setIsLoading(true);
-      if (existingEvent) {
-        router.push(`/event/${existingEvent.slug}`);
-      } else {
-        setError("Cet événement n'existe pas.");
-        setIsLoading(false);
-      }
-    } else {
-      if (!name || !slug) return;
-      setIsLoading(true);
-      try {
-        const createEvent = useMutation(api.events.createEvent);
-        // Note: Mutations must be called at the top level or via useMutation
-        // I will use a direct mutation call if I can, but I need to use the hook.
-      } catch (err: any) {
-        setError(err.message || "Erreur lors de la création.");
-        setIsLoading(false);
-      }
-    }
-  };
-
-  // We need to move useMutation to top level
-  const createMutation = useMutation(api.events.createEvent);
   const joinMutation = useMutation(api.events.joinEvent);
-  
+
+  useEffect(() => {
+    if (isAuthenticated && !authLoading) {
+      router.push("/dashboard");
+    }
+  }, [isAuthenticated, authLoading, router]);
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
     try {
       await signIn("password", { email, password, flow: authStep, name: userName });
+      // Redirect happens in useEffect
     } catch (err: any) {
       setError("Identifiants incorrects ou erreur serveur.");
-      setIsLoading(false);
-    }
-  };
-
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name || !slug) {
-      setError("Veuillez remplir tous les champs.");
-      return;
-    }
-    if (!endDateTime) {
-      setError("Veuillez définir une date de fin.");
-      return;
-    }
-
-    const endsAt = new Date(endDateTime).getTime();
-    if (endsAt <= Date.now()) {
-      setError("La date de fin doit être dans le futur.");
-      return;
-    }
-
-    setIsLoading(true);
-    setError("");
-    try {
-      await createMutation({ name, slug, endsAt, maxPhotosPerParticipant: maxPhotos });
-      await joinMutation({ eventId: slug, guestId: getGuestId() });
-      router.push(`/event/${slug.toLowerCase().trim().replace(/\s+/g, "-")}/gallery`);
-    } catch (err: any) {
-      // Extract specific error message from Convex if possible
-      const errorMessage = err.message || "";
-      if (errorMessage.includes("déjà utilisé")) {
-        setError("Ce code d'événement est déjà utilisé.");
-      } else if (errorMessage.includes("dans le passé")) {
-        setError("La date de fin ne peut pas être dans le passé.");
-      } else {
-        setError("Une erreur est survenue lors de la création.");
-      }
       setIsLoading(false);
     }
   };
@@ -132,6 +61,8 @@ export default function HomePage() {
       setIsLoading(false);
     }
   };
+
+  if (authLoading) return null;
 
   return (
     <main className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] px-6 relative overflow-hidden bg-neutral">
@@ -155,13 +86,13 @@ export default function HomePage() {
         <div className="flex justify-center gap-8 mb-4">
           <button 
             onClick={() => { setMode("join"); setError(""); }}
-            className={`text-[10px] uppercase tracking-[0.3em] font-bold transition-all ${mode === "join" ? "text-tertiary" : "text-white/20 hover:text-white/40"}`}
+            className={`text-[10px] uppercase tracking-[0.3em] font-bold transition-all ${mode === "join" ? "text-white" : "text-white/20 hover:text-white/40"}`}
           >
             Rejoindre
           </button>
           <button 
             onClick={() => { setMode("create"); setError(""); }}
-            className={`text-[10px] uppercase tracking-[0.3em] font-bold transition-all ${mode === "create" ? "text-tertiary" : "text-white/20 hover:text-white/40"}`}
+            className={`text-[10px] uppercase tracking-[0.3em] font-bold transition-all ${mode === "create" ? "text-white" : "text-white/20 hover:text-white/40"}`}
           >
             Organiser
           </button>
@@ -183,7 +114,7 @@ export default function HomePage() {
                   placeholder="Code de l'événement"
                   value={slug}
                   onChange={(e) => setSlug(e.target.value)}
-                  className="w-full h-20 bg-transparent border-b border-white/5 text-center text-3xl font-display placeholder:text-white/5 focus:outline-none focus:border-tertiary transition-all duration-500 uppercase tracking-widest"
+                  className="blink-input !h-20 !text-3xl font-display uppercase tracking-widest text-center"
                 />
                 {error && <p className="absolute -bottom-6 left-0 right-0 text-[10px] text-red-500 font-bold uppercase tracking-widest">{error}</p>}
               </div>
@@ -196,7 +127,7 @@ export default function HomePage() {
                 <ScanLine className="w-4 h-4" />
               </button>
             </motion.form>
-          ) : !isAuthenticated ? (
+          ) : (
             <motion.form
               key="auth"
               initial={{ opacity: 0, y: 20 }}
@@ -215,7 +146,7 @@ export default function HomePage() {
                     placeholder="Prénom"
                     value={userName}
                     onChange={(e) => setUserName(e.target.value)}
-                    className="w-full h-14 bg-transparent border-b border-white/5 text-center text-xl font-display placeholder:text-white/5 focus:outline-none focus:border-tertiary transition-all"
+                    className="blink-input text-center"
                     required
                   />
                 )}
@@ -224,7 +155,7 @@ export default function HomePage() {
                   placeholder="Email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full h-14 bg-transparent border-b border-white/5 text-center text-xl font-display placeholder:text-white/5 focus:outline-none focus:border-tertiary transition-all"
+                  className="blink-input text-center"
                   required
                 />
                 <input
@@ -232,7 +163,7 @@ export default function HomePage() {
                   placeholder="Mot de passe"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full h-14 bg-transparent border-b border-white/5 text-center text-xl font-display placeholder:text-white/5 focus:outline-none focus:border-tertiary transition-all"
+                  className="blink-input text-center"
                   required
                 />
               </div>
@@ -257,91 +188,6 @@ export default function HomePage() {
                   {authStep === "signIn" ? "Pas encore de compte ? S'inscrire" : "Déjà un compte ? Se connecter"}
                 </button>
               </div>
-            </motion.form>
-          ) : (
-            <motion.form
-              key="create"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              onSubmit={handleCreate}
-              className="space-y-6"
-            >
-              <div className="flex justify-between items-center px-2">
-                <div className="flex items-center gap-2 opacity-60">
-                  <UserIcon className="w-3 h-3 text-tertiary" />
-                  <span className="text-[10px] uppercase tracking-widest font-bold truncate max-w-[150px]">{user?.name || user?.email || email}</span>
-                </div>
-                <button 
-                  onClick={() => signOut()}
-                  className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold text-red-500/60 hover:text-red-500 transition-colors"
-                >
-                  <LogOut className="w-3 h-3" />
-                  Quitter
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="Nom (ex: Mariage d'Alice)"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full h-14 bg-transparent border-b border-white/5 text-center text-xl font-display placeholder:text-white/5 focus:outline-none focus:border-tertiary transition-all"
-                />
-                <input
-                  type="text"
-                  placeholder="Code unique (ex: alice-2026)"
-                  value={slug}
-                  onChange={(e) => setSlug(e.target.value)}
-                  className="w-full h-14 bg-transparent border-b border-white/5 text-center text-xl font-display placeholder:text-white/5 focus:outline-none focus:border-tertiary transition-all uppercase tracking-widest"
-                />
-              </div>
-
-              <div className="space-y-4 pt-4">
-                <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-white/40">Date et heure de fin</p>
-                <div className="relative group">
-                  <input
-                    type="datetime-local"
-                    value={endDateTime}
-                    onChange={(e) => setEndDateTime(e.target.value)}
-                    className={clsx(
-                      "w-full h-14 bg-transparent border-b border-white/5 text-center text-xl font-display",
-                      "focus:outline-none focus:border-white/20 transition-all text-white invert-calendar-icon",
-                    )}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-4 pt-4">
-                <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-white/40">Limite de photos par personne</p>
-                <div className="flex justify-center gap-4">
-                  {[5, 10, 25, 50].map((val) => (
-                    <button
-                      key={val}
-                      type="button"
-                      onClick={() => setMaxPhotos(val)}
-                      className={clsx(
-                        "w-12 h-12 rounded-2xl border flex items-center justify-center text-sm font-bold transition-all",
-                        maxPhotos === val 
-                          ? "bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.2)]" 
-                          : "bg-transparent border-white/10 text-white/40 hover:border-white/30"
-                      )}
-                    >
-                      {val}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              {error && <p className="text-[10px] text-red-500 font-bold uppercase tracking-widest">{error}</p>}
-              <button
-                type="submit"
-                disabled={isLoading || !name || !slug}
-                className="btn-once-primary flex items-center gap-3 mx-auto"
-              >
-                {isLoading ? "Création..." : "Créer l'événement"}
-                <Plus className="w-4 h-4" />
-              </button>
             </motion.form>
           )}
         </AnimatePresence>

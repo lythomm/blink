@@ -11,7 +11,9 @@ export default defineSchema({
     endsAt: v.number(),
     maxPhotosPerParticipant: v.number(),
     creatorId: v.string(),
-  }).index("by_slug", ["slug"]),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_creator", ["creatorId"]),
   photos: defineTable({
     eventId: v.string(),
     guestId: v.string(),

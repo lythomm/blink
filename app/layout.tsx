@@ -31,7 +31,7 @@ export default function RootLayout({
         lang="fr"
         className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       >
-        <body className="min-h-screen bg-neutral text-primary antialiased selection:bg-tertiary selection:text-white flex flex-col overflow-x-hidden">
+        <body className="min-h-screen bg-neutral text-primary antialiased selection:bg-white selection:text-black flex flex-col overflow-x-hidden">
           <ConvexClientProvider>{children}</ConvexClientProvider>
         </body>
       </html>
