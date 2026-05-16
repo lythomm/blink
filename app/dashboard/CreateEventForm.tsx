@@ -259,8 +259,8 @@ export default function CreateEventForm({
               className="flex-1 flex flex-col items-center justify-center space-y-8 text-center py-4"
             >
               <div className="space-y-4">
-                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Check className="w-8 h-8 text-neutral" />
+                <div className="w-20 h-20 bg-black border border-white/10 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(255,255,255,0.1)]">
+                  <img src="/logo_blink.svg" alt="Success" className="w-10 h-10" />
                 </div>
                 <h2 className="text-4xl md:text-5xl font-display leading-tight">
                   C'est prêt !

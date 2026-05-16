@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Fond noir avec coins arrondis -->
+  <rect width="512" height="512" rx="112" fill="#000000"/>
+  
+  <g transform="translate(256, 256)">
+    <!-- Premier cadre : L'arrière-plan solide, incliné (L'instant capturé) -->
+    <rect x="-90" y="-90" width="180" height="180" rx="16" fill="#FFFFFF" transform="rotate(15)"/>
+    
+    <!-- Deuxième cadre : L'avant-plan en outline, incliné inversement (Le mouvement/Le cadrage) -->
+    <rect x="-100" y="-100" width="200" height="200" rx="24" fill="none" stroke="#FFFFFF" stroke-width="16" transform="rotate(-10)"/>
+    
+    <!-- Le point d'impact : Un confetti/flash excentré qui équilibre la composition -->
+    <circle cx="120" cy="-110" r="18" fill="#FFFFFF"/>
+  </g>
+</svg>
