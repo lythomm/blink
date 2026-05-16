@@ -12,6 +12,7 @@ interface GuestNameModalProps {
 }
 
 export function GuestNameModal({ eventId, guestId }: GuestNameModalProps) {
+  const event = useQuery(api.events.getEventBySlug, { slug: eventId });
   const participant = useQuery(api.events.getParticipant, { eventId, guestId });
   const updateNameMutation = useMutation(api.events.updateParticipantName);
   const [name, setName] = useState("");
@@ -74,6 +75,13 @@ export function GuestNameModal({ eventId, guestId }: GuestNameModalProps) {
                 <p className="text-white/50 text-sm">
                   Pour que l'on sache qui a pris les photos, merci de renseigner
                   ton prénom.
+                </p>
+                <p className="text-white/50 text-sm">
+                  Ton appareil contient{" "}
+                  <span className="text-white font-bold">
+                    {event?.maxPhotosPerParticipant || "..."} photos
+                  </span>{" "}
+                  à ne pas rater !
                 </p>
               </div>
 
