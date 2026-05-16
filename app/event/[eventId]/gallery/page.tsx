@@ -183,7 +183,7 @@ export default function GalleryPage() {
                 onClick={() => setIndex(idx)}
               >
                 <Image
-                  src={`https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/${photo.cloudinaryId}`}
+                  src={photo.cloudinaryId}
                   alt="Captured moment"
                   fill
                   className="object-cover grayscale-[0.2] group-hover:scale-110 group-hover:grayscale-0 transition-all duration-700"

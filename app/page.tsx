@@ -72,7 +72,7 @@ export default function HomePage() {
   if (authLoading) return null;
 
   return (
-    <main className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] px-6 relative overflow-hidden bg-neutral">
+    <main className="flex-1 flex flex-col items-center justify-center h-dvh px-6 relative overflow-hidden bg-neutral">
       <div className="grain-overlay z-10" />
       <div className="cinematic-overlay absolute inset-0 z-20" />
 
@@ -86,11 +86,6 @@ export default function HomePage() {
           <span className="text-[10px] uppercase tracking-[0.5em] font-bold text-white/40">
             Expérience Film Numérique
           </span>
-          <img 
-            src="/logo_blink.svg" 
-            alt="Blink Logo" 
-            className="w-16 h-16 mx-auto mb-6 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]"
-          />
           <h1 className="text-7xl font-display leading-none">Blink.</h1>
         </motion.div>
 
