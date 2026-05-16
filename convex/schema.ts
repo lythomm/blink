@@ -1,13 +1,16 @@
+import { authTables } from "@convex-dev/auth/server";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
+  ...authTables,
   events: defineTable({
     name: v.string(),
     slug: v.string(),
     createdAt: v.number(),
     endsAt: v.number(),
     maxPhotosPerParticipant: v.number(),
+    creatorId: v.string(),
   }).index("by_slug", ["slug"]),
   photos: defineTable({
     eventId: v.string(),

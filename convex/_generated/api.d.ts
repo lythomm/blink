@@ -8,9 +8,12 @@
  * @module
  */
 
+import type * as auth from "../auth.js";
 import type * as cloudinary from "../cloudinary.js";
 import type * as events from "../events.js";
+import type * as http from "../http.js";
 import type * as photos from "../photos.js";
+import type * as users from "../users.js";
 
 import type {
   ApiFromModules,
@@ -19,9 +22,12 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  auth: typeof auth;
   cloudinary: typeof cloudinary;
   events: typeof events;
+  http: typeof http;
   photos: typeof photos;
+  users: typeof users;
 }>;
 
 /**

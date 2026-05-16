@@ -8,6 +8,9 @@ import { MoveRight, Plus, ScanLine } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 import { getGuestId } from "@/app/lib/utils";
+import { useAuthActions } from "@convex-dev/auth/react";
+import { useConvexAuth } from "convex/react";
+import { LogOut, User as UserIcon } from "lucide-react";
 
 export default function HomePage() {
   const router = useRouter();
@@ -18,8 +21,17 @@ export default function HomePage() {
   const [maxPhotos, setMaxPhotos] = useState(10);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  
+  // Auth state
+  const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
+  const { signIn, signOut } = useAuthActions();
+  const [authStep, setAuthStep] = useState<"signIn" | "signUp">("signIn");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [userName, setUserName] = useState("");
 
   const existingEvent = useQuery(api.events.getEventBySlug, { slug });
+  const user = useQuery(api.users.current);
 
   const handleAction = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,6 +70,18 @@ export default function HomePage() {
   // We need to move useMutation to top level
   const createMutation = useMutation(api.events.createEvent);
   const joinMutation = useMutation(api.events.joinEvent);
+  
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+    try {
+      await signIn("password", { email, password, flow: authStep, name: userName });
+    } catch (err: any) {
+      setError("Identifiants incorrects ou erreur serveur.");
+      setIsLoading(false);
+    }
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -172,6 +196,68 @@ export default function HomePage() {
                 <ScanLine className="w-4 h-4" />
               </button>
             </motion.form>
+          ) : !isAuthenticated ? (
+            <motion.form
+              key="auth"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              onSubmit={handleAuth}
+              className="space-y-6"
+            >
+              <div className="space-y-4">
+                <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-white/40">
+                  {authStep === "signIn" ? "Connexion Organisateur" : "Inscription Organisateur"}
+                </p>
+                {authStep === "signUp" && (
+                  <input
+                    type="text"
+                    placeholder="Prénom"
+                    value={userName}
+                    onChange={(e) => setUserName(e.target.value)}
+                    className="w-full h-14 bg-transparent border-b border-white/5 text-center text-xl font-display placeholder:text-white/5 focus:outline-none focus:border-tertiary transition-all"
+                    required
+                  />
+                )}
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full h-14 bg-transparent border-b border-white/5 text-center text-xl font-display placeholder:text-white/5 focus:outline-none focus:border-tertiary transition-all"
+                  required
+                />
+                <input
+                  type="password"
+                  placeholder="Mot de passe"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full h-14 bg-transparent border-b border-white/5 text-center text-xl font-display placeholder:text-white/5 focus:outline-none focus:border-tertiary transition-all"
+                  required
+                />
+              </div>
+              
+              {error && <p className="text-[10px] text-red-500 font-bold uppercase tracking-widest">{error}</p>}
+              
+              <div className="flex flex-col gap-4">
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="btn-once-primary flex items-center gap-3 mx-auto"
+                >
+                  {isLoading ? "Chargement..." : authStep === "signIn" ? "Se connecter" : "Créer un compte"}
+                  <MoveRight className="w-4 h-4" />
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => setAuthStep(authStep === "signIn" ? "signUp" : "signIn")}
+                  className="text-[10px] uppercase tracking-[0.2em] text-white/40 hover:text-white/60 transition-colors"
+                >
+                  {authStep === "signIn" ? "Pas encore de compte ? S'inscrire" : "Déjà un compte ? Se connecter"}
+                </button>
+              </div>
+            </motion.form>
           ) : (
             <motion.form
               key="create"
@@ -181,20 +267,34 @@ export default function HomePage() {
               onSubmit={handleCreate}
               className="space-y-6"
             >
+              <div className="flex justify-between items-center px-2">
+                <div className="flex items-center gap-2 opacity-60">
+                  <UserIcon className="w-3 h-3 text-tertiary" />
+                  <span className="text-[10px] uppercase tracking-widest font-bold truncate max-w-[150px]">{user?.name || user?.email || email}</span>
+                </div>
+                <button 
+                  onClick={() => signOut()}
+                  className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold text-red-500/60 hover:text-red-500 transition-colors"
+                >
+                  <LogOut className="w-3 h-3" />
+                  Quitter
+                </button>
+              </div>
+
               <div className="space-y-4">
                 <input
                   type="text"
                   placeholder="Nom (ex: Mariage d'Alice)"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full h-14 bg-transparent border-b border-white/5 text-center text-xl font-display placeholder:text-white/5 focus:outline-none focus:border-white/20 transition-all"
+                  className="w-full h-14 bg-transparent border-b border-white/5 text-center text-xl font-display placeholder:text-white/5 focus:outline-none focus:border-tertiary transition-all"
                 />
                 <input
                   type="text"
                   placeholder="Code unique (ex: alice-2026)"
                   value={slug}
                   onChange={(e) => setSlug(e.target.value)}
-                  className="w-full h-14 bg-transparent border-b border-white/5 text-center text-xl font-display placeholder:text-white/5 focus:outline-none focus:border-white/20 transition-all uppercase tracking-widest"
+                  className="w-full h-14 bg-transparent border-b border-white/5 text-center text-xl font-display placeholder:text-white/5 focus:outline-none focus:border-tertiary transition-all uppercase tracking-widest"
                 />
               </div>
 

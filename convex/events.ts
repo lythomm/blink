@@ -1,5 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const getEventBySlug = query({
   args: { slug: v.string() },
@@ -26,6 +27,11 @@ export const createEvent = mutation({
     maxPhotosPerParticipant: v.number() 
   },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
+      throw new Error("Vous devez être connecté pour créer un événement.");
+    }
+
     const slug = args.slug.toLowerCase().trim().replace(/\s+/g, "-");
     
     // Check if slug already exists
@@ -49,6 +55,7 @@ export const createEvent = mutation({
       createdAt: now,
       endsAt: args.endsAt,
       maxPhotosPerParticipant: args.maxPhotosPerParticipant,
+      creatorId: userId,
     });
   },
 });
