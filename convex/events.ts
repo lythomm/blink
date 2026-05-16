@@ -127,3 +127,31 @@ export const listUserEvents = query({
     );
   },
 });
+
+export const updateParticipantName = mutation({
+  args: { eventId: v.string(), guestId: v.string(), name: v.string() },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("participants")
+      .withIndex("by_event_and_guest", (q) =>
+        q.eq("eventId", args.eventId).eq("guestId", args.guestId),
+      )
+      .unique();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, { name: args.name });
+    }
+  },
+});
+
+export const getParticipant = query({
+  args: { eventId: v.string(), guestId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("participants")
+      .withIndex("by_event_and_guest", (q) =>
+        q.eq("eventId", args.eventId).eq("guestId", args.guestId),
+      )
+      .unique();
+  },
+});

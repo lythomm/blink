@@ -4,11 +4,26 @@ import { v } from "convex/values";
 export const getPhotos = query({
   args: { eventId: v.string() },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const photos = await ctx.db
       .query("photos")
       .withIndex("by_event_and_guest", (q) => q.eq("eventId", args.eventId))
       .order("desc")
       .collect();
+
+    return Promise.all(
+      photos.map(async (photo) => {
+        const participant = await ctx.db
+          .query("participants")
+          .withIndex("by_event_and_guest", (q) =>
+            q.eq("eventId", args.eventId).eq("guestId", photo.guestId)
+          )
+          .unique();
+        return {
+          ...photo,
+          authorName: participant?.name || "Invité mystère",
+        };
+      })
+    );
   },
 });
 

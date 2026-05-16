@@ -23,6 +23,7 @@ import { useState, useEffect } from "react";
 import clsx from "clsx";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
+import { GuestNameModal } from "@/app/components/GuestNameModal";
 
 export default function GalleryPage() {
   const { eventId } = useParams() as { eventId: string };
@@ -30,6 +31,7 @@ export default function GalleryPage() {
   const guestId = getGuestId();
   const { isAuthenticated } = useConvexAuth();
 
+  const user = useQuery(api.users.current);
   const photos = useQuery(api.photos.getPhotos, { eventId });
   const event = useQuery(api.events.getEventBySlug, { slug: eventId });
   const deletePhotoMutation = useMutation(api.photos.deletePhoto);
@@ -38,6 +40,8 @@ export default function GalleryPage() {
   const participantCount = useQuery(api.events.getParticipantCount, {
     eventId,
   });
+
+  const isCreator = user && event && user._id === event.creatorId;
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<string>("");
@@ -92,22 +96,27 @@ export default function GalleryPage() {
   return (
     <main className="flex-1 flex flex-col bg-black text-white relative h-dvh overflow-y-auto custom-scrollbar">
       <div className="grain-overlay pointer-events-none" />
+      <GuestNameModal eventId={eventId} guestId={guestId} />
 
       {/* Top Bar */}
-      <nav className="flex items-center justify-between px-6 py-6 z-20">
-        <button
-          onClick={() => router.push(isAuthenticated ? "/dashboard" : "/")}
-          className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 border border-white/5"
-        >
-          <ArrowLeft className="w-5 h-5 text-white/60" />
-        </button>
-        <button className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 border border-white/5">
-          <Settings className="w-5 h-5 text-white/60" />
-        </button>
-      </nav>
+      {isCreator && (
+        <nav className="flex items-center justify-between px-5 py-6 z-20">
+          <button
+            onClick={() => router.push(isAuthenticated ? "/dashboard" : "/")}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 border border-white/5"
+          >
+            <ArrowLeft className="w-5 h-5 text-white/60" />
+          </button>
+          <button className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 border border-white/5">
+            <Settings className="w-5 h-5 text-white/60" />
+          </button>
+        </nav>
+      )}
 
       {/* Hero Section */}
-      <header className="px-8 pt-2 pb-8 space-y-6 z-10">
+      <header
+        className={`px-6 pt-2 pb-8 space-y-6 z-10 ${isCreator ? "" : "pt-12"}`}
+      >
         <div className="flex justify-between items-start gap-4">
           <h1 className="text-4xl font-display leading-[1.1]">
             {event?.name || "Chargement..."}
@@ -141,11 +150,9 @@ export default function GalleryPage() {
       <section className="px-6 pb-10 flex items-center gap-3 z-10">
         <button className="flex-1 h-12 flex items-center justify-center gap-2 rounded-xl bg-white/5 border border-white/5 text-[11px] font-bold uppercase tracking-widest hover:bg-white/10 transition-colors">
           <Download className="w-4 h-4" />
-          Sauver
         </button>
         <button className="flex-1 h-12 flex items-center justify-center gap-2 rounded-xl bg-white/5 border border-white/5 text-[11px] font-bold uppercase tracking-widest hover:bg-white/10 transition-colors">
           <UserPlus className="w-4 h-4" />
-          Inviter
         </button>
         <button
           onClick={() => router.push(`/event/${eventId}`)}
@@ -157,13 +164,13 @@ export default function GalleryPage() {
       </section>
 
       {/* Grid Border Separator */}
-      <div className="px-6 mb-8">
-        <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+      <div className="px-5 mb-8">
+        <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
       </div>
 
       {/* Photo Grid */}
-      <section className="px-6 pb-24 z-10">
-        <div className="grid grid-cols-2 gap-4">
+      <section className="px-3 pb-24 z-10">
+        <div className="grid grid-cols-2 gap-2">
           <AnimatePresence mode="popLayout">
             {photos?.map((photo, idx) => (
               <motion.div
@@ -172,7 +179,7 @@ export default function GalleryPage() {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: idx * 0.05, duration: 0.6 }}
-                className="relative aspect-[3/4] rounded-3xl overflow-hidden group shadow-2xl border border-white/5 cursor-zoom-in"
+                className="relative aspect-[3/4] rounded-2xl overflow-hidden group shadow-2xl border border-white/5 cursor-zoom-in"
                 onClick={() => setIndex(idx)}
               >
                 <Image
@@ -184,9 +191,11 @@ export default function GalleryPage() {
                 />
 
                 {/* Guest Label */}
-                <div className="absolute top-4 left-4">
-                  <span className="text-[10px] font-medium text-white/60 drop-shadow-md">
-                    {photo.guestId === guestId ? "Moi" : "Invité"}
+                <div className="absolute top-2 left-2">
+                  <span className="text-[10px] font-medium text-white bg-black/10 px-2.5 py-1 rounded-full border border-white/10">
+                    {photo.guestId === guestId
+                      ? "Moi"
+                      : (photo as any).authorName}
                   </span>
                 </div>
 
@@ -231,13 +240,6 @@ export default function GalleryPage() {
           </div>
         )}
       </section>
-
-      {/* Footer Branding */}
-      <footer className="py-12 flex justify-center opacity-10">
-        <p className="text-[9px] uppercase tracking-[0.5em] font-bold">
-          Blink — Système Film Unique
-        </p>
-      </footer>
 
       <Lightbox
         index={index}

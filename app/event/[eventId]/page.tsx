@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
+import { GuestNameModal } from "@/app/components/GuestNameModal";
 
 export default function CameraPage() {
   const { eventId } = useParams() as { eventId: string };
@@ -273,6 +274,7 @@ export default function CameraPage() {
 
   return (
     <main className="fixed inset-0 bg-black flex flex-col overflow-hidden text-white font-sans">
+      <GuestNameModal eventId={eventId} guestId={guestId} />
       <div className="grain-overlay" />
 
       {/* Top Navigation Bar - Absolute Overlay */}

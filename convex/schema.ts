@@ -23,6 +23,7 @@ export default defineSchema({
   participants: defineTable({
     eventId: v.string(),
     guestId: v.string(),
+    name: v.optional(v.string()),
     joinedAt: v.number(),
   }).index("by_event", ["eventId"])
     .index("by_event_and_guest", ["eventId", "guestId"]),

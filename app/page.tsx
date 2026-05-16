@@ -11,14 +11,13 @@ import { getGuestId } from "@/app/lib/utils";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useConvexAuth } from "convex/react";
 
-
 export default function HomePage() {
   const router = useRouter();
   const [mode, setMode] = useState<"join" | "create">("join");
   const [slug, setSlug] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  
+
   // Auth state
   const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
   const { signIn } = useAuthActions();
@@ -41,7 +40,12 @@ export default function HomePage() {
     setIsLoading(true);
     setError("");
     try {
-      await signIn("password", { email, password, flow: authStep, name: userName });
+      await signIn("password", {
+        email,
+        password,
+        flow: authStep,
+        name: userName,
+      });
       // Redirect happens in useEffect
     } catch (err: any) {
       setError("Identifiants incorrects ou erreur serveur.");
@@ -54,7 +58,10 @@ export default function HomePage() {
     if (!slug) return;
     setIsLoading(true);
     if (existingEvent) {
-      await joinMutation({ eventId: existingEvent.slug, guestId: getGuestId() });
+      await joinMutation({
+        eventId: existingEvent.slug,
+        guestId: getGuestId(),
+      });
       router.push(`/event/${existingEvent.slug}/gallery`);
     } else {
       setError("Événement introuvable.");
@@ -68,7 +75,7 @@ export default function HomePage() {
     <main className="flex-1 flex flex-col items-center justify-center min-h-[100dvh] px-6 relative overflow-hidden bg-neutral">
       <div className="grain-overlay z-10" />
       <div className="cinematic-overlay absolute inset-0 z-20" />
-      
+
       <div className="w-full max-w-xl space-y-12 text-center relative z-30">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -84,14 +91,20 @@ export default function HomePage() {
 
         {/* Mode Selector */}
         <div className="flex justify-center gap-8 mb-4">
-          <button 
-            onClick={() => { setMode("join"); setError(""); }}
+          <button
+            onClick={() => {
+              setMode("join");
+              setError("");
+            }}
             className={`text-[10px] uppercase tracking-[0.3em] font-bold transition-all ${mode === "join" ? "text-white" : "text-white/20 hover:text-white/40"}`}
           >
             Rejoindre
           </button>
-          <button 
-            onClick={() => { setMode("create"); setError(""); }}
+          <button
+            onClick={() => {
+              setMode("create");
+              setError("");
+            }}
             className={`text-[10px] uppercase tracking-[0.3em] font-bold transition-all ${mode === "create" ? "text-white" : "text-white/20 hover:text-white/40"}`}
           >
             Organiser
@@ -116,7 +129,11 @@ export default function HomePage() {
                   onChange={(e) => setSlug(e.target.value)}
                   className="blink-input !h-20 !text-3xl font-display uppercase tracking-widest text-center"
                 />
-                {error && <p className="absolute -bottom-6 left-0 right-0 text-[10px] text-red-500 font-bold uppercase tracking-widest">{error}</p>}
+                {error && (
+                  <p className="absolute -bottom-6 left-0 right-0 text-[10px] text-red-500 font-bold uppercase tracking-widest">
+                    {error}
+                  </p>
+                )}
               </div>
               <button
                 type="submit"
@@ -137,9 +154,6 @@ export default function HomePage() {
               className="space-y-6"
             >
               <div className="space-y-4">
-                <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-white/40">
-                  {authStep === "signIn" ? "Connexion Organisateur" : "Inscription Organisateur"}
-                </p>
                 {authStep === "signUp" && (
                   <input
                     type="text"
@@ -167,25 +181,37 @@ export default function HomePage() {
                   required
                 />
               </div>
-              
-              {error && <p className="text-[10px] text-red-500 font-bold uppercase tracking-widest">{error}</p>}
-              
+
+              {error && (
+                <p className="text-[10px] text-red-500 font-bold uppercase tracking-widest">
+                  {error}
+                </p>
+              )}
+
               <div className="flex flex-col gap-4">
                 <button
                   type="submit"
                   disabled={isLoading}
                   className="btn-once-primary flex items-center gap-3 mx-auto"
                 >
-                  {isLoading ? "Chargement..." : authStep === "signIn" ? "Se connecter" : "Créer un compte"}
+                  {isLoading
+                    ? "Chargement..."
+                    : authStep === "signIn"
+                      ? "Se connecter"
+                      : "Créer un compte"}
                   <MoveRight className="w-4 h-4" />
                 </button>
-                
+
                 <button
                   type="button"
-                  onClick={() => setAuthStep(authStep === "signIn" ? "signUp" : "signIn")}
+                  onClick={() =>
+                    setAuthStep(authStep === "signIn" ? "signUp" : "signIn")
+                  }
                   className="text-[10px] uppercase tracking-[0.2em] text-white/40 hover:text-white/60 transition-colors"
                 >
-                  {authStep === "signIn" ? "Pas encore de compte ? S'inscrire" : "Déjà un compte ? Se connecter"}
+                  {authStep === "signIn"
+                    ? "Pas encore de compte ? S'inscrire"
+                    : "Déjà un compte ? Se connecter"}
                 </button>
               </div>
             </motion.form>
@@ -199,12 +225,20 @@ export default function HomePage() {
           className="flex justify-center gap-12 pt-8 opacity-40"
         >
           <div className="text-left">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-white mb-1">Limite 50</p>
-            <p className="text-[10px] text-secondary font-medium tracking-wide">Poses par invité</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-white mb-1">
+              Limite 50
+            </p>
+            <p className="text-[10px] text-secondary font-medium tracking-wide">
+              Poses par invité
+            </p>
           </div>
           <div className="text-left">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-white mb-1">Temps Réel</p>
-            <p className="text-[10px] text-secondary font-medium tracking-wide">Galerie collective</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-white mb-1">
+              Temps Réel
+            </p>
+            <p className="text-[10px] text-secondary font-medium tracking-wide">
+              Galerie collective
+            </p>
           </div>
         </motion.div>
       </div>
