@@ -285,7 +285,7 @@ export default function CameraPage() {
         </button>
 
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/20 backdrop-blur-md border border-white/5">
-          <Timer className="w-3.5 h-3.5 text-orange-400" />
+          <Timer className="w-3.5 h-3.5 text-tertiary" />
           <span className="text-[11px] font-medium tracking-wide">{timeLeft || "Calcul en cours..."}</span>
         </div>
 
@@ -351,7 +351,7 @@ export default function CameraPage() {
                   className={clsx(
                     "pointer-events-auto w-10 h-10 flex items-center justify-center rounded-full transition-colors",
                     flashEnabled
-                      ? "bg-orange-400 text-black"
+                      ? "bg-tertiary text-black"
                       : "bg-black/20 text-white/60 backdrop-blur-sm",
                   )}
                 >

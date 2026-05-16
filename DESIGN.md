@@ -5,7 +5,7 @@ description: A dark, cinematic event-sharing system with elegant serif headlines
 colors:
   primary: "#FFFFFF"
   secondary: "#B3B3B3"
-  tertiary: "#0000EE"
+  tertiary: "#E87D3E"
   neutral: "#0D0D0D"
   surface: "#111111"
   on-surface: "#FFFFFF"
