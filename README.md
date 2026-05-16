@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Blink. 📸
 
-## Getting Started
+**Blink.** est une application web progressive (PWA) de "caméra jetable numérique" haut de gamme, conçue pour capturer l'essence de vos événements (mariages, soirées, festivals) avec une esthétique cinématographique et une simplicité radicale.
 
-First, run the development server:
+![Blink UI Preview](https://res.cloudinary.com/demo/image/upload/v1/sample.jpg) *Note: Image de remplacement*
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## ✨ L'Expérience Blink
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Blink transforme chaque smartphone en un appareil photo argentique moderne. Pas de filtres complexes après coup, pas de réseaux sociaux distrayants — juste l'instant présent, capturé pour toujours.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Esthétique Cinématographique** : Une interface minimaliste, sombre et élégante avec un grain de film authentique et des animations fluides.
+- **Obturateur Mécanique** : Une animation d'obturateur à volets synchronisée avec un flash de lumière pour un retour tactile et visuel satisfaisant.
+- **Galerie Collective Temps Réel** : Tous les invités voient la pellicule se remplir en direct sur un mur d'images partagé.
+- **Limites Créatives** : L'organisateur définit un nombre de poses limité par invité (5, 10, 25 ou 50), rendant chaque déclenchement précieux.
+- **Cycle de Vie Éphémère** : Les événements ont une date de fin précise. Une fois le temps écoulé, la caméra s'arrête, laissant place aux souvenirs.
+- **Fonctionnement Hors-Ligne** : Capturez des photos même sans réseau (tunnel, sous-sol) ; Blink les synchronisera automatiquement dès que la connexion reviendra.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🚀 Stack Technique
 
-## Learn More
+- **Framework** : [Next.js 15](https://nextjs.org/) (App Router)
+- **Base de Données & Backend** : [Convex](https://www.convex.dev/) (Temps réel natif)
+- **Stockage Image** : [Cloudinary](https://cloudinary.com/) (Optimisation et dossiers par événement)
+- **Animations** : [Framer Motion](https://www.framer.com/motion/)
+- **PWA** : Support complet pour installation sur écran d'accueil et mode plein écran.
+- **Iconographie** : [Lucide React](https://lucide.dev/)
 
-To learn more about Next.js, take a look at the following resources:
+## 🛠️ Installation & Développement
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Pré-requis
+- Un compte [Convex](https://www.convex.dev/)
+- Un compte [Cloudinary](https://cloudinary.com/)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Configuration
+1. Clonez le dépôt.
+2. Installez les dépendances :
+   ```bash
+   npm install
+   ```
+3. Configurez vos variables d'environnement (`.env.local`) :
+   ```env
+   NEXT_PUBLIC_CONVEX_URL=...
+   NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=...
+   NEXT_PUBLIC_CLOUDINARY_API_KEY=...
+   CLOUDINARY_API_SECRET=...
+   ```
+4. Lancez le serveur de développement :
+   ```bash
+   npm run dev
+   ```
 
-## Deploy on Vercel
+## 📱 Fonctionnalités PWA
+Pour une expérience optimale, installez Blink sur votre smartphone :
+- **iOS** : Partager > Sur l'écran d'accueil.
+- **Android** : Menu > Installer l'application.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+*Développé avec passion pour des moments inoubliables.*

@@ -8,13 +8,21 @@
  * @module
  */
 
+import type * as cloudinary from "../cloudinary.js";
+import type * as events from "../events.js";
+import type * as photos from "../photos.js";
+
 import type {
   ApiFromModules,
   FilterApi,
   FunctionReference,
 } from "convex/server";
 
-declare const fullApi: ApiFromModules<{}>;
+declare const fullApi: ApiFromModules<{
+  cloudinary: typeof cloudinary;
+  events: typeof events;
+  photos: typeof photos;
+}>;
 
 /**
  * A utility for referencing Convex functions in your app's public API.
