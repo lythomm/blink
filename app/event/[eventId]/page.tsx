@@ -16,6 +16,7 @@ import {
   X,
   LayoutGrid,
   Zap,
+  ZapOff,
   RefreshCw,
   Film,
   Timer,
@@ -31,14 +32,16 @@ export default function CameraPage() {
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const activeStreamRef = useRef<MediaStream | null>(null);
+  const activeRequestIdRef = useRef<number>(0);
   const [isCapturing, setIsCapturing] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
   const [pendingCount, setPendingCount] = useState(0);
-  const [flashEnabled, setFlashEnabled] = useState(false);
-  const [zoomLevel, setZoomLevel] = useState(1);
+  const [flashEnabled, setFlashEnabled] = useState(true);
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("environment");
   const [timeLeft, setTimeLeft] = useState<string>("");
 
   const takePhotoMutation = useMutation(api.photos.takePhoto);
@@ -83,12 +86,12 @@ export default function CameraPage() {
   }, [isOnline]);
 
   useEffect(() => {
-    startCamera();
+    startCamera(facingMode);
     setupWakeLock();
     return () => {
-      stream?.getTracks().forEach((track) => track.stop());
+      stopActiveStream();
     };
-  }, []);
+  }, [facingMode]);
 
   useEffect(() => {
     if (!event?.endsAt) return;
@@ -127,24 +130,63 @@ export default function CameraPage() {
     }
   };
 
-  const startCamera = async () => {
+  const stopActiveStream = () => {
+    if (activeStreamRef.current) {
+      activeStreamRef.current.getTracks().forEach((track) => track.stop());
+      activeStreamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setStream(null);
+  };
+  const startCamera = async (mode = facingMode) => {
     if (typeof window === "undefined" || !navigator.mediaDevices) return;
+    
+    const requestId = ++activeRequestIdRef.current;
+    
+    // Stop the previous stream immediately
+    stopActiveStream();
+
+    // Short delay to let the OS release the camera resource
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    // If a newer request was initiated during our delay, abort
+    if (requestId !== activeRequestIdRef.current) {
+      return;
+    }
+
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: "environment",
+          facingMode: mode,
           width: { ideal: 1920 },
           height: { ideal: 1080 },
         },
         audio: false,
       });
+
+      // If a newer request was initiated during getUserMedia, stop this stream and abort
+      if (requestId !== activeRequestIdRef.current) {
+        mediaStream.getTracks().forEach(track => track.stop());
+        return;
+      }
+
+      activeStreamRef.current = mediaStream;
       setStream(mediaStream);
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
       }
     } catch (err) {
-      console.error("Camera access failed:", err);
+      if (requestId === activeRequestIdRef.current) {
+        console.error("Camera access failed:", err);
+      }
     }
+  };
+
+  const toggleCamera = () => {
+    const newMode = facingMode === "user" ? "environment" : "user";
+    setFacingMode(newMode);
   };
 
   const capture = async () => {
@@ -159,32 +201,71 @@ export default function CameraPage() {
 
     setIsProcessing(true);
     setIsCapturing(true);
-    // End flash quickly for snappy feel
-    setTimeout(() => setIsCapturing(false), 150);
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
+    const track = stream?.getVideoTracks()[0];
+
+    // End flash white visual overlay quickly for snappy feel
+    setTimeout(() => setIsCapturing(false), 150);
+
+    // If flash is enabled and we are on back camera, physically turn on the torch first
+    if (flashEnabled && facingMode === "environment" && track) {
+      try {
+        await track.applyConstraints({ advanced: [{ torch: true } as any] });
+        // Small delay to let the flashlight fire and illuminate the scene before capturing
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      } catch (e) {
+        console.log("Failed to turn on physical flash:", e);
+      }
+    }
 
     if (context) {
-      // Capture at a slightly lower but high quality res if needed, 
-      // but let's stick to video res for quality.
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
 
-      context.filter =
-        "sepia(0.2) contrast(1.1) saturate(0.9) brightness(1.05)";
+      // 1. Filtre argentique : Fort contraste, saturation réduite, ton légèrement chaud
+      context.filter = "contrast(1.35) saturate(0.75) sepia(0.15) brightness(1.15)";
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      context.filter = "none";
 
-      // Add lighter grain (fewer points, slightly larger for visible but faster effect)
-      context.fillStyle = "rgba(255,255,255,0.02)";
-      for (let i = 0; i < 800; i++) {
-        context.fillRect(
-          Math.random() * canvas.width,
-          Math.random() * canvas.height,
-          2,
-          2,
-        );
+      // 2. Effet de Flash (centre légèrement surexposé)
+      const flashGradient = context.createRadialGradient(
+        canvas.width / 2, canvas.height * 0.4, 0,
+        canvas.width / 2, canvas.height * 0.4, canvas.height * 0.4
+      );
+      flashGradient.addColorStop(0, "rgba(255,255,255,0.15)");
+      flashGradient.addColorStop(1, "rgba(255,255,255,0)");
+      context.fillStyle = flashGradient;
+      context.fillRect(0, 0, canvas.width, canvas.height);
+
+      // 3. Vignettage (bords sombres et légèrement verdâtres typiques des jetables)
+      const vignette = context.createRadialGradient(
+        canvas.width / 2, canvas.height / 2, canvas.height * 0.3,
+        canvas.width / 2, canvas.height / 2, canvas.height * 0.8
+      );
+      vignette.addColorStop(0, "rgba(0,0,0,0)");
+      vignette.addColorStop(1, "rgba(0,20,10,0.6)");
+      context.fillStyle = vignette;
+      context.fillRect(0, 0, canvas.width, canvas.height);
+
+      // 4. Grain de pellicule plus dense (bruit noir et blanc)
+      for (let i = 0; i < 8000; i++) {
+        const x = Math.random() * canvas.width;
+        const y = Math.random() * canvas.height;
+        const isDark = Math.random() > 0.5;
+        context.fillStyle = isDark ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.06)";
+        context.fillRect(x, y, 2, 2);
+      }
+
+      // Turn off physical torch immediately after capturing the canvas frame
+      if (flashEnabled && facingMode === "environment" && track) {
+        try {
+          await track.applyConstraints({ advanced: [{ torch: false } as any] });
+        } catch (e) {
+          console.log("Failed to turn off physical flash:", e);
+        }
       }
 
       canvas.toBlob(
@@ -196,6 +277,8 @@ export default function CameraPage() {
         "image/webp",
         0.8,
       );
+    } else {
+      setIsProcessing(false);
     }
   };
 
@@ -307,7 +390,7 @@ export default function CameraPage() {
             className="w-full h-full object-cover"
             style={{
               filter:
-                "sepia(0.15) contrast(1.1) brightness(1.02) saturate(0.9)",
+                "contrast(1.35) saturate(0.75) sepia(0.15) brightness(1.15)",
             }}
           />
 
@@ -357,39 +440,20 @@ export default function CameraPage() {
                       : "bg-black/20 text-white/60 backdrop-blur-sm",
                   )}
                 >
-                  <Zap
-                    className={clsx("w-5 h-5", flashEnabled && "fill-current")}
-                  />
+                  {flashEnabled ? (
+                    <Zap className="w-5 h-5 fill-current" />
+                  ) : (
+                    <ZapOff className="w-5 h-5" />
+                  )}
                 </button>
 
-                {/* Zoom Selector */}
-                <div className="pointer-events-auto flex items-center gap-1 p-1 rounded-full bg-black/30 backdrop-blur-md border border-white/10">
-                  <button
-                    onClick={() => setZoomLevel(0.5)}
-                    className={clsx(
-                      "px-3 py-1 rounded-full text-[10px] font-bold transition-all",
-                      zoomLevel === 0.5
-                        ? "bg-white/20 text-white"
-                        : "text-white/40",
-                    )}
-                  >
-                    0.5
-                  </button>
-                  <button
-                    onClick={() => setZoomLevel(1)}
-                    className={clsx(
-                      "px-3 py-1 rounded-full text-[10px] font-bold transition-all",
-                      zoomLevel === 1
-                        ? "bg-white/20 text-white"
-                        : "text-white/40",
-                    )}
-                  >
-                    1x
-                  </button>
-                </div>
+
 
                 {/* Flip Camera */}
-                <button className="pointer-events-auto w-10 h-10 flex items-center justify-center rounded-full bg-black/20 text-white/60 backdrop-blur-sm">
+                <button 
+                  onClick={toggleCamera}
+                  className="pointer-events-auto w-10 h-10 flex items-center justify-center rounded-full bg-black/20 text-white/60 backdrop-blur-sm"
+                >
                   <RefreshCw className="w-5 h-5" />
                 </button>
               </div>
