@@ -74,7 +74,7 @@ export default function GalleryPage() {
       const diff = event.endsAt - now;
 
       if (diff <= 0) {
-        setTimeLeft("Expiré");
+        setTimeLeft("Cloturé");
         return;
       }
 
@@ -156,7 +156,12 @@ export default function GalleryPage() {
         </button>
         <button
           onClick={() => router.push(`/event/${eventId}`)}
-          className="flex-[1.5] h-12 flex items-center justify-center gap-2 rounded-xl bg-white text-black text-[11px] font-bold uppercase tracking-widest hover:bg-white/90 active:scale-95 transition-all shadow-[0_0_30px_rgba(255,255,255,0.1)]"
+          disabled={timeLeft === "Cloturé"}
+          className={`flex-[1.5] h-12 flex items-center justify-center gap-2 rounded-xl bg-white text-black text-[11px] font-bold uppercase tracking-widest transition-all ${
+            timeLeft === "Cloturé"
+              ? "opacity-50 cursor-not-allowed"
+              : "hover:bg-white/90 active:scale-95 shadow-[0_0_30px_rgba(255,255,255,0.1)]"
+          }`}
         >
           <Camera className="w-4 h-4" />
           Caméra

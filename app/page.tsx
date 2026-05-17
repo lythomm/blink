@@ -124,7 +124,7 @@ export default function HomePage() {
               <div className="relative group">
                 <input
                   type="text"
-                  placeholder="Code de l'événement"
+                  placeholder="Code"
                   value={slug}
                   onChange={(e) => setSlug(e.target.value)}
                   className="blink-input !h-20 !text-3xl font-display uppercase tracking-widest text-center"

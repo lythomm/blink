@@ -110,7 +110,8 @@ export const listUserEvents = query({
       events.map(async (event) => {
         const photos = await ctx.db
           .query("photos")
-          .withIndex("by_event_and_guest", (q) => q.eq("eventId", event.slug))
+          .withIndex("by_event", (q) => q.eq("eventId", event.slug))
+          .order("desc")
           .collect();
 
         const participants = await ctx.db
@@ -122,6 +123,7 @@ export const listUserEvents = query({
           ...event,
           photoCount: photos.length,
           participantCount: participants.length,
+          previews: photos.slice(0, 4).map(p => p.cloudinaryId),
         };
       }),
     );

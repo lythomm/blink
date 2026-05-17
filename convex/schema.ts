@@ -19,7 +19,8 @@ export default defineSchema({
     guestId: v.string(),
     cloudinaryId: v.string(),
     createdAt: v.number(),
-  }).index("by_event_and_guest", ["eventId", "guestId"]),
+  }).index("by_event", ["eventId"])
+    .index("by_event_and_guest", ["eventId", "guestId"]),
   participants: defineTable({
     eventId: v.string(),
     guestId: v.string(),
