@@ -250,6 +250,7 @@ export default function GalleryPage() {
         index={index}
         open={index >= 0}
         close={() => setIndex(-1)}
+        carousel={{ padding: 0, imageFit: "contain" }}
         slides={photos?.map((photo) => ({
           src: `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/${photo.cloudinaryId}`,
         }))}
