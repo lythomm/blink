@@ -96,7 +96,7 @@ export default function HomePage() {
               setMode("join");
               setError("");
             }}
-            className={`text-[10px] uppercase tracking-[0.3em] font-bold transition-all ${mode === "join" ? "text-white" : "text-white/20 hover:text-white/40"}`}
+            className={`text-[10px] uppercase tracking-[0.3em] font-bold transition-all ${mode === "join" ? "text-white" : "text-white/20"}`}
           >
             Rejoindre
           </button>
@@ -105,7 +105,7 @@ export default function HomePage() {
               setMode("create");
               setError("");
             }}
-            className={`text-[10px] uppercase tracking-[0.3em] font-bold transition-all ${mode === "create" ? "text-white" : "text-white/20 hover:text-white/40"}`}
+            className={`text-[10px] uppercase tracking-[0.3em] font-bold transition-all ${mode === "create" ? "text-white" : "text-white/20"}`}
           >
             Organiser
           </button>
@@ -207,7 +207,7 @@ export default function HomePage() {
                   onClick={() =>
                     setAuthStep(authStep === "signIn" ? "signUp" : "signIn")
                   }
-                  className="text-[10px] uppercase tracking-[0.2em] text-white/40 hover:text-white/60 transition-colors"
+                  className="text-[10px] uppercase tracking-[0.2em] text-white/40 transition-colors"
                 >
                   {authStep === "signIn"
                     ? "Pas encore de compte ? S'inscrire"

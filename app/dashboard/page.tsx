@@ -79,7 +79,7 @@ export default function DashboardPage() {
               </div>
               <button
                 onClick={() => signOut()}
-                className="p-2 bg-white/5 rounded-full border border-white/5 text-red-500/60 hover:text-red-500 transition-colors"
+                className="p-2 bg-white/5 rounded-full border border-white/5 text-red-500/60 transition-colors"
                 title="Se déconnecter"
               >
                 <LogOut className="w-3 h-3" />
@@ -104,7 +104,7 @@ export default function DashboardPage() {
                   </p>
                   <button
                     onClick={() => setView("create")}
-                    className="mt-4 text-white text-[10px] uppercase tracking-widest font-bold hover:underline"
+                    className="mt-4 text-white text-[10px] uppercase tracking-widest font-bold"
                   >
                     Créer votre premier événement
                   </button>
@@ -156,7 +156,7 @@ export default function DashboardPage() {
                                   </div>
                                 </div>
 
-                                <div className="self-end bg-black/50 backdrop-blur-md p-3 rounded-2xl group-hover:bg-black/70 transition-colors">
+                                <div className="self-end bg-black/50 backdrop-blur-md p-3 rounded-2xl transition-colors">
                                   <Camera className="w-5 h-5 text-white" />
                                 </div>
                               </div>
@@ -193,7 +193,7 @@ export default function DashboardPage() {
                               className="group text-left w-full"
                             >
                               <div className="flex justify-between items-baseline mb-4">
-                                <h3 className="text-xl font-display text-white group-hover:text-white/80 transition-colors">
+                                <h3 className="text-xl font-display text-white transition-colors">
                                   {event.name}
                                 </h3>
                                 <span className="text-[10px] font-medium text-white/40">
@@ -211,7 +211,7 @@ export default function DashboardPage() {
                                         : idx === 1
                                           ? "rotate-2"
                                           : "-rotate-1"
-                                    } origin-bottom hover:rotate-0 transition-transform duration-300`}
+                                    } origin-bottom transition-transform duration-300`}
                                   >
                                     <Image
                                       src={pid}
@@ -223,7 +223,7 @@ export default function DashboardPage() {
                                   </div>
                                 ))}
                                 {previews.length >= 4 && (
-                                  <div className="relative flex-1 rounded-2xl overflow-hidden rotate-2 origin-bottom hover:rotate-0 transition-transform duration-300">
+                                  <div className="relative flex-1 rounded-2xl overflow-hidden rotate-2 origin-bottom transition-transform duration-300">
                                     <Image
                                       src={previews[3]}
                                       width={200}

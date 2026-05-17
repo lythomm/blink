@@ -96,7 +96,7 @@ export default function CreateEventForm({
         <button
           type="button"
           onClick={onCancel}
-          className="p-2 -mr-2 text-white/40 hover:text-white/60 transition-colors"
+          className="p-2 -mr-2 text-white/40 transition-colors"
           title="Quitter la création"
         >
           <X className="w-5 h-5" />
@@ -272,7 +272,7 @@ export default function CreateEventForm({
               </div>
 
               <div className="relative group">
-                <div className="absolute -inset-4 bg-white/5 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute -inset-4 bg-white/5 rounded-2xl blur-xl transition-opacity" />
                 <div className="relative bg-white p-4 rounded-xl shadow-2xl">
                   <img
                     src="/mock_qr_code_blink_1778950106803.png"
@@ -291,14 +291,14 @@ export default function CreateEventForm({
                     );
                     alert("Lien copié !");
                   }}
-                  className="flex items-center justify-center gap-2 py-3 px-4 bg-white/5 border border-white/10 rounded-xl text-[10px] uppercase tracking-widest font-bold hover:bg-white/10 transition-colors"
+                  className="flex items-center justify-center gap-2 py-3 px-4 bg-white/5 border border-white/10 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-colors"
                 >
                   Copier le lien
                 </button>
                 <button
                   type="button"
                   onClick={() => alert("QR Code enregistré !")}
-                  className="flex items-center justify-center gap-2 py-3 px-4 bg-white/5 border border-white/10 rounded-xl text-[10px] uppercase tracking-widest font-bold hover:bg-white/10 transition-colors"
+                  className="flex items-center justify-center gap-2 py-3 px-4 bg-white/5 border border-white/10 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-colors"
                 >
                   Enregistrer QR
                 </button>
@@ -334,7 +334,7 @@ export default function CreateEventForm({
               <button
                 type="button"
                 onClick={() => setCreateStep(createStep - 1)}
-                className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] font-bold text-white/40 hover:text-white/60 transition-colors py-2"
+                className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] font-bold text-white/40 transition-colors py-2"
               >
                 <ArrowLeft className="w-3 h-3" />
                 Retour
@@ -372,7 +372,7 @@ export default function CreateEventForm({
                 : createStep === 5
                   ? "Accéder"
                   : "Suivant"}
-            <MoveRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            <MoveRight className="w-4 h-4 transition-transform" />
           </button>
         </div>
       </div>

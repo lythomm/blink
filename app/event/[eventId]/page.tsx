@@ -449,7 +449,7 @@ export default function CameraPage() {
               "before:absolute before:inset-0 before:rounded-full before:border-[3px] before:border-white/20 before:scale-110",
               (remainingPoses === 0 || timeLeft === "Expired")
                 ? "opacity-30 grayscale"
-                : "hover:scale-105 active:scale-95",
+                : "active:scale-95",
             )}
           >
             <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center">

@@ -148,10 +148,10 @@ export default function GalleryPage() {
 
       {/* Action Bar */}
       <section className="px-6 pb-10 flex items-center gap-3 z-10">
-        <button className="flex-1 h-12 flex items-center justify-center gap-2 rounded-xl bg-white/5 border border-white/5 text-[11px] font-bold uppercase tracking-widest hover:bg-white/10 transition-colors">
+        <button className="flex-1 h-12 flex items-center justify-center gap-2 rounded-xl bg-white/5 border border-white/5 text-[11px] font-bold uppercase tracking-widest transition-colors">
           <Download className="w-4 h-4" />
         </button>
-        <button className="flex-1 h-12 flex items-center justify-center gap-2 rounded-xl bg-white/5 border border-white/5 text-[11px] font-bold uppercase tracking-widest hover:bg-white/10 transition-colors">
+        <button className="flex-1 h-12 flex items-center justify-center gap-2 rounded-xl bg-white/5 border border-white/5 text-[11px] font-bold uppercase tracking-widest transition-colors">
           <UserPlus className="w-4 h-4" />
         </button>
         <button
@@ -160,7 +160,7 @@ export default function GalleryPage() {
           className={`flex-[1.5] h-12 flex items-center justify-center gap-2 rounded-xl bg-white text-black text-[11px] font-bold uppercase tracking-widest transition-all ${
             timeLeft === "Cloturé"
               ? "opacity-50 cursor-not-allowed"
-              : "hover:bg-white/90 active:scale-95 shadow-[0_0_30px_rgba(255,255,255,0.1)]"
+              : "active:scale-95 shadow-[0_0_30px_rgba(255,255,255,0.1)]"
           }`}
         >
           <Camera className="w-4 h-4" />
@@ -191,7 +191,7 @@ export default function GalleryPage() {
                   src={photo.cloudinaryId}
                   alt="Captured moment"
                   fill
-                  className="object-cover grayscale-[0.2] group-hover:scale-110 group-hover:grayscale-0 transition-all duration-700"
+                  className="object-cover"
                   sizes="(max-width: 768px) 50vw, 33vw"
                 />
 
@@ -206,19 +206,19 @@ export default function GalleryPage() {
 
                 {/* Actions Overlay */}
                 {photo.guestId === guestId && (
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <div className="absolute bottom-2 right-2">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDelete(photo._id, photo.cloudinaryId);
                       }}
                       disabled={deletingId === photo._id}
-                      className="p-3 bg-white/10 backdrop-blur-xl rounded-full hover:bg-red-500/20 transition-colors pointer-events-auto"
+                      className="p-2 bg-black/50 backdrop-blur-xl rounded-full transition-colors pointer-events-auto"
                     >
                       {deletingId === photo._id ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader2 className="w-4 h-4 animate-spin text-white" />
                       ) : (
-                        <Trash2 className="w-4 h-4 text-red-400" />
+                        <Trash2 className="w-4 h-4 text-white" />
                       )}
                     </button>
                   </div>
