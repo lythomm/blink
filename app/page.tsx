@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { getGuestId } from "@/app/lib/utils";
 import { useConvexAuth } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
+import { Modal } from "./components/Modal";
 
 export default function HomePage() {
   const router = useRouter();
@@ -299,199 +300,166 @@ export default function HomePage() {
       </footer>
 
       {/* Login Modal */}
-      <AnimatePresence>
-        {isLoginOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => {
-                if (!isLoading) {
-                  setIsLoginOpen(false);
-                  setLoginEmail("");
-                  setLoginPassword("");
-                  setLoginName("");
-                  setLoginFlow("signIn");
-                  setLoginError("");
-                }
-              }}
-              className="fixed inset-0 bg-black/60 backdrop-blur-md"
-            />
+      <Modal 
+        isOpen={isLoginOpen} 
+        onClose={() => {
+          if (!isLoading) {
+            setIsLoginOpen(false);
+            setLoginEmail("");
+            setLoginPassword("");
+            setLoginName("");
+            setLoginFlow("signIn");
+            setLoginError("");
+          }
+        }}
+        maxWidth="md"
+      >
+        <form
+          onSubmit={handleLoginSubmit}
+          className="space-y-6 text-left"
+        >
+          <div className="space-y-2">
+            <h2 className="text-3xl font-display text-white">
+              {loginFlow === "verify" 
+                ? "Vérification"
+                : loginFlow === "signIn" 
+                  ? "Se connecter" 
+                  : "S'inscrire"}
+            </h2>
+            <p className="text-xs text-white/40 leading-relaxed">
+              {loginFlow === "verify"
+                ? `Un code a été envoyé à ${loginEmail}. Veuillez le saisir ci-dessous.`
+                : loginFlow === "signIn"
+                  ? ""
+                  : "Créez votre compte Blink en quelques instants pour organiser vos événements."}
+            </p>
+          </div>
 
-            {/* Modal Content */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="w-full max-w-md bg-neutral border border-white/10 rounded-3xl p-8 shadow-2xl relative z-50 space-y-6"
-            >
-              <button
-                onClick={() => {
-                  setIsLoginOpen(false);
-                  setLoginEmail("");
-                  setLoginPassword("");
-                  setLoginName("");
-                  setLoginFlow("signIn");
-                  setLoginError("");
-                }}
-                className="absolute top-6 right-6 text-white/40 hover:text-white transition-colors cursor-pointer"
-                title="Fermer"
-                disabled={isLoading}
-              >
-                <X className="w-5 h-5" />
-              </button>
-
-              <form
-                onSubmit={handleLoginSubmit}
-                className="space-y-6 text-left"
-              >
-                <div className="space-y-2">
-                  <h2 className="text-3xl font-display text-white">
-                    {loginFlow === "verify" 
-                      ? "Vérification"
-                      : loginFlow === "signIn" 
-                        ? "Se connecter" 
-                        : "S'inscrire"}
-                  </h2>
-                  <p className="text-xs text-white/40 leading-relaxed">
-                    {loginFlow === "verify"
-                      ? `Un code a été envoyé à ${loginEmail}. Veuillez le saisir ci-dessous.`
-                      : loginFlow === "signIn"
-                        ? ""
-                        : "Créez votre compte Blink en quelques instants pour organiser vos événements."}
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  {loginFlow === "verify" ? (
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[10px] uppercase tracking-wider font-bold text-white/40">
-                        Code à 6 chiffres
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="123456"
-                        value={otpCode}
-                        onChange={(e) => setOtpCode(e.target.value)}
-                        disabled={isLoading}
-                        className="blink-input w-full text-center tracking-[0.5em] text-2xl font-display"
-                        required
-                        maxLength={6}
-                      />
-                    </div>
-                  ) : (
-                    <>
-                      {loginFlow === "signUp" && (
-                        <div className="flex flex-col gap-2">
-                          <label className="text-[10px] uppercase tracking-wider font-bold text-white/40">
-                            Prénom
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="Ex: Thomas"
-                            value={loginName}
-                            onChange={(e) => setLoginName(e.target.value)}
-                            disabled={isLoading}
-                            className="blink-input w-full"
-                            required
-                          />
-                        </div>
-                      )}
-
-                      <div className="flex flex-col gap-2">
-                        <label className="text-[10px] uppercase tracking-wider font-bold text-white/40">
-                          Adresse email
-                        </label>
-                        <input
-                          type="email"
-                          placeholder="votre@email.com"
-                          value={loginEmail}
-                          onChange={(e) => setLoginEmail(e.target.value)}
-                          disabled={isLoading}
-                          className="blink-input w-full"
-                          required
-                        />
-                      </div>
-
-                      <div className="flex flex-col gap-2">
-                        <label className="text-[10px] uppercase tracking-wider font-bold text-white/40">
-                          Mot de passe
-                        </label>
-                        <input
-                          type="password"
-                          placeholder="••••••••"
-                          value={loginPassword}
-                          onChange={(e) => setLoginPassword(e.target.value)}
-                          disabled={isLoading}
-                          className="blink-input w-full"
-                          required
-                        />
-                      </div>
-                    </>
-                  )}
-
-                  {loginError && (
-                    <p className="text-[10px] text-red-500 font-bold uppercase tracking-widest">
-                      {loginError}
-                    </p>
-                  )}
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={
-                    isLoading || 
-                    (loginFlow === "verify" ? !otpCode : (!loginEmail || !loginPassword))
-                  }
-                  className="btn-once-primary w-full justify-center cursor-pointer"
-                >
-                  {isLoading
-                    ? "Chargement..."
-                    : loginFlow === "verify"
-                      ? "Vérifier le code"
-                      : loginFlow === "signIn"
-                        ? "Se connecter"
-                        : "Créer un compte"}
-                </button>
-
-                {loginFlow !== "verify" && (
-                  <div className="text-center pt-2">
-                    <button
-                      type="button"
+          <div className="space-y-4">
+            {loginFlow === "verify" ? (
+              <div className="flex flex-col gap-2">
+                <label className="text-[10px] uppercase tracking-wider font-bold text-white/40">
+                  Code à 6 chiffres
+                </label>
+                <input
+                  type="text"
+                  placeholder="123456"
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value)}
+                  disabled={isLoading}
+                  className="blink-input w-full text-center tracking-[0.5em] text-2xl font-display"
+                  required
+                  maxLength={6}
+                />
+              </div>
+            ) : (
+              <>
+                {loginFlow === "signUp" && (
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] uppercase tracking-wider font-bold text-white/40">
+                      Prénom
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ex: Thomas"
+                      value={loginName}
+                      onChange={(e) => setLoginName(e.target.value)}
                       disabled={isLoading}
-                      onClick={() => {
-                        setLoginFlow(
-                          loginFlow === "signIn" ? "signUp" : "signIn",
-                        );
-                        setLoginError("");
-                      }}
-                      className="text-xs text-white/40"
-                    >
-                      {loginFlow === "signIn" ? (
-                        <>
-                          Pas encore de compte ?{" "}
-                          <span className="text-white underline hover:text-white/80 transition-colors">
-                            S'inscrire
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          Déjà un compte ?{" "}
-                          <span className="text-white underline hover:text-white/80 transition-colors">
-                            Se connecter
-                          </span>
-                        </>
-                      )}
-                    </button>
+                      className="blink-input w-full"
+                      required
+                    />
                   </div>
                 )}
-              </form>
-            </motion.div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] uppercase tracking-wider font-bold text-white/40">
+                    Adresse email
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="votre@email.com"
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    disabled={isLoading}
+                    className="blink-input w-full"
+                    required
+                  />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] uppercase tracking-wider font-bold text-white/40">
+                    Mot de passe
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    disabled={isLoading}
+                    className="blink-input w-full"
+                    required
+                  />
+                </div>
+              </>
+            )}
+
+            {loginError && (
+              <p className="text-[10px] text-red-500 font-bold uppercase tracking-widest">
+                {loginError}
+              </p>
+            )}
           </div>
-        )}
-      </AnimatePresence>
+
+          <button
+            type="submit"
+            disabled={
+              isLoading || 
+              (loginFlow === "verify" ? !otpCode : (!loginEmail || !loginPassword))
+            }
+            className="btn-once-primary w-full justify-center cursor-pointer"
+          >
+            {isLoading
+              ? "Chargement..."
+              : loginFlow === "verify"
+                ? "Vérifier le code"
+                : loginFlow === "signIn"
+                  ? "Se connecter"
+                  : "Créer un compte"}
+          </button>
+
+          {loginFlow !== "verify" && (
+            <div className="text-center pt-2">
+              <button
+                type="button"
+                disabled={isLoading}
+                onClick={() => {
+                  setLoginFlow(
+                    loginFlow === "signIn" ? "signUp" : "signIn",
+                  );
+                  setLoginError("");
+                }}
+                className="text-xs text-white/40 hover:text-white transition-colors cursor-pointer"
+              >
+                {loginFlow === "signIn" ? (
+                  <>
+                    Pas encore de compte ?{" "}
+                    <span className="text-white underline">
+                      S'inscrire
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    Déjà un compte ?{" "}
+                    <span className="text-white underline">
+                      Se connecter
+                    </span>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+        </form>
+      </Modal>
     </main>
   );
 }

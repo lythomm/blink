@@ -17,7 +17,10 @@ import {
   Loader2,
   Trash2,
   Film,
+  HelpCircle,
+  X,
 } from "lucide-react";
+import { Modal } from "@/app/components/Modal";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import clsx from "clsx";
@@ -46,6 +49,7 @@ export default function GalleryPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<string>("");
   const [index, setIndex] = useState(-1);
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
 
   const handleDelete = async (photoId: any, cloudinaryId: string) => {
     if (!confirm("Effacer ce souvenir définitivement ?")) return;
@@ -193,6 +197,7 @@ export default function GalleryPage() {
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 50vw, 33vw"
+                  priority={idx < 4}
                 />
 
                 {/* Guest Label */}
@@ -255,6 +260,58 @@ export default function GalleryPage() {
           src: `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/${photo.cloudinaryId}`,
         }))}
       />
+
+      {/* About Button */}
+      <button
+        onClick={() => setIsAboutOpen(true)}
+        className="fixed bottom-6 right-6 z-[60] w-10 h-10 flex items-center justify-center rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-lg transition-transform hover:scale-105 active:scale-95"
+      >
+        <HelpCircle className="w-5 h-5" />
+      </button>
+
+      {/* About Modal */}
+      <Modal isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)}>
+        <div className="space-y-4">
+          <div className="text-center space-y-2 mb-6">
+            <h2 className="text-2xl font-display text-white">À propos</h2>
+            <p className="text-sm text-white/50">Blink (Prototype)</p>
+          </div>
+
+          <div className="space-y-4 text-sm text-white/80 leading-relaxed">
+            <p>
+              Salut ! Je m'appelle <span className="text-white font-medium">Thomas</span> et j'ai développé ce projet.
+            </p>
+            <p>
+              Blink est actuellement un <span className="text-white font-medium">prototype</span>. Il est normal de rencontrer quelques bugs ou comportements inattendus pendant son utilisation.
+            </p>
+            <p className="pt-2 border-t border-white/10">
+              Vos retours sont précieux ! N'hésitez pas à me contacter si vous rencontrez des problèmes ou si vous avez des suggestions :
+            </p>
+
+            <div className="flex flex-col gap-3 pt-2">
+              <a 
+                href="tel:0611597627" 
+                className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+              >
+                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+                  📞
+                </div>
+                <span className="font-medium">06 11 59 76 27</span>
+              </a>
+              
+              <a 
+                href="mailto:lythomm@gmail.com" 
+                className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+              >
+                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+                  ✉️
+                </div>
+                <span className="font-medium">lythomm@gmail.com</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </Modal>
     </main>
   );
 }
