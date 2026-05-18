@@ -8,6 +8,7 @@ import { MoveRight, ArrowLeft, Check, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 import { getGuestId, prettyDisplayDate } from "@/app/lib/utils";
+import { useToast } from "@/app/components/Toast";
 
 interface CreateEventFormProps {
   createStep: number;
@@ -21,6 +22,7 @@ export default function CreateEventForm({
   onCancel,
 }: CreateEventFormProps) {
   const router = useRouter();
+  const toast = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -294,7 +296,7 @@ export default function CreateEventForm({
                     navigator.clipboard.writeText(
                       `${window.location.origin}/join/${slug}`,
                     );
-                    alert("Lien copié !");
+                    toast.success("Lien copié dans le presse-papier !");
                   }}
                   className="flex items-center justify-center gap-2 py-3 px-4 bg-white/5 border border-white/10 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-colors"
                 >
@@ -302,7 +304,7 @@ export default function CreateEventForm({
                 </button>
                 <button
                   type="button"
-                  onClick={() => alert("QR Code enregistré !")}
+                  onClick={() => toast.success("QR Code enregistré avec succès !")}
                   className="flex items-center justify-center gap-2 py-3 px-4 bg-white/5 border border-white/10 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-colors"
                 >
                   Enregistrer QR

@@ -1,7 +1,5 @@
 import Link from "next/link";
 
-export const dynamic = "force-dynamic";
-
 export default function NotFound() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-neutral text-primary p-4">
@@ -10,7 +8,8 @@ export default function NotFound() {
         <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-md space-y-2">
           <h2 className="text-xl font-bold text-white">Page introuvable</h2>
           <p className="text-sm text-neutral-400">
-            Désolé, la page que vous recherchez n&apos;existe pas ou a été déplacée.
+            Désolé, la page que vous recherchez n&apos;existe pas ou a été
+            déplacée.
           </p>
         </div>
         <Link
