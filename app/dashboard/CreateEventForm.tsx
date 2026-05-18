@@ -27,7 +27,7 @@ export default function CreateEventForm({
   const [error, setError] = useState("");
 
   const user = useQuery(api.users.current);
-  const sendWelcomeKit = useAction(api.actions.emails.sendWelcomeKitEmail);
+  // const sendWelcomeKit = useAction(api.actions.emails.sendWelcomeKitEmail);
 
   // Form states
   const [name, setName] = useState("");
@@ -56,7 +56,8 @@ export default function CreateEventForm({
       });
       await joinMutation({ eventId: slug, guestId: getGuestId() });
 
-      // Send Welcome Kit email if email is available
+      // Send Welcome Kit email if email is available (disabled for now)
+      /*
       const targetEmail = user?.email;
       if (targetEmail) {
         try {
@@ -71,6 +72,7 @@ export default function CreateEventForm({
           console.error("Error sending Welcome Kit email:", emailErr);
         }
       }
+      */
 
       setCreateStep(5);
       setIsLoading(false);
@@ -85,7 +87,9 @@ export default function CreateEventForm({
     }
   };
 
-  const handleCreateStep4Submit = async (e?: React.FormEvent | React.MouseEvent) => {
+  const handleCreateStep4Submit = async (
+    e?: React.FormEvent | React.MouseEvent,
+  ) => {
     e?.preventDefault();
     await performEventCreation();
   };
@@ -119,9 +123,7 @@ export default function CreateEventForm({
               className="space-y-8"
             >
               <h2 className="text-4xl md:text-5xl font-display leading-tight">
-                Quel est le nom de
-                <br />
-                ce film ?
+                Quel est le nom de cet album ?
               </h2>
               <input
                 type="text"
@@ -184,9 +186,8 @@ export default function CreateEventForm({
                 sera-t-elle prête ?
               </h2>
               <p className="text-sm text-white/40">
-                À cette date, le film sera "développé" et
-                <br />
-                la galerie sera révélée à tous.
+                À cette date, l'album sera bloqué et les participants ne
+                pourront plus ajouter de photos.
               </p>
               <div className="relative group">
                 <input
@@ -225,9 +226,7 @@ export default function CreateEventForm({
               className="space-y-8"
             >
               <h2 className="text-4xl md:text-5xl font-display leading-tight">
-                Combien de photos
-                <br />
-                par personne ?
+                Combien de photos par personne ?
               </h2>
               <p className="text-sm text-white/40">
                 Fixez une limite pour préserver l'aspect
@@ -267,7 +266,11 @@ export default function CreateEventForm({
             >
               <div className="space-y-4">
                 <div className="w-20 h-20 bg-black border border-white/10 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(255,255,255,0.1)]">
-                  <img src="/logo_blink.svg" alt="Success" className="w-10 h-10" />
+                  <img
+                    src="/logo_blink.svg"
+                    alt="Success"
+                    className="w-10 h-10"
+                  />
                 </div>
                 <h2 className="text-4xl md:text-5xl font-display leading-tight">
                   C'est prêt !
@@ -304,7 +307,9 @@ export default function CreateEventForm({
                 </button>
                 <button
                   type="button"
-                  onClick={() => toast.success("QR Code enregistré avec succès !")}
+                  onClick={() =>
+                    toast.success("QR Code enregistré avec succès !")
+                  }
                   className="flex items-center justify-center gap-2 py-3 px-4 bg-white/5 border border-white/10 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-colors"
                 >
                   Enregistrer QR
@@ -315,7 +320,7 @@ export default function CreateEventForm({
         </AnimatePresence>
       </div>
 
-       <div className="mt-auto pt-8">
+      <div className="mt-auto pt-8">
         {/* Step Indicator above the border */}
         <div className="flex justify-center items-center mb-8">
           <div className="flex gap-2 items-center">
@@ -357,7 +362,8 @@ export default function CreateEventForm({
                 if (createStep === 2) {
                   if (!slug) return setError("Code requis");
                   if (slug.length < 4) return setError("Minimum 4 caractères");
-                  if (slug.length > 16) return setError("Maximum 16 caractères");
+                  if (slug.length > 16)
+                    return setError("Maximum 16 caractères");
                 }
                 if (createStep === 3 && !endDateTime)
                   return setError("Date requise");

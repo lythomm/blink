@@ -276,35 +276,7 @@ export default function HomeContent() {
             Créer un événement
           </button>
         </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
-          className="flex justify-center gap-12 pt-8 opacity-40"
-        >
-          <div className="text-left">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-white mb-1">
-              Limite 50
-            </p>
-            <p className="text-[10px] text-secondary font-medium tracking-wide">
-              Poses par invité
-            </p>
-          </div>
-          <div className="text-left">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-white mb-1">
-              Temps Réel
-            </p>
-            <p className="text-[10px] text-secondary font-medium tracking-wide">
-              Galerie collective
-            </p>
-          </div>
-        </motion.div>
       </div>
-
-      <footer className="absolute bottom-12 left-1/2 -translate-x-1/2 text-[10px] uppercase font-bold tracking-[0.5em] text-white/10 whitespace-nowrap">
-        Blink — Système Film Unique v1.1
-      </footer>
 
       {/* Login Modal */}
       <Modal
