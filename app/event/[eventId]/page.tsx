@@ -20,11 +20,9 @@ import {
   RefreshCw,
   Film,
   Timer,
-  HelpCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { Modal } from "@/app/components/Modal";
 import clsx from "clsx";
 import { GuestNameModal } from "@/app/components/GuestNameModal";
 
@@ -44,9 +42,10 @@ export default function CameraPage() {
   const [isOnline, setIsOnline] = useState(true);
   const [pendingCount, setPendingCount] = useState(0);
   const [flashEnabled, setFlashEnabled] = useState(true);
-  const [facingMode, setFacingMode] = useState<"user" | "environment">("environment");
+  const [facingMode, setFacingMode] = useState<"user" | "environment">(
+    "environment",
+  );
   const [timeLeft, setTimeLeft] = useState<string>("");
-  const [isAboutOpen, setIsAboutOpen] = useState(false);
 
   const takePhotoMutation = useMutation(api.photos.takePhoto);
   const joinMutation = useMutation(api.events.joinEvent);
@@ -146,14 +145,14 @@ export default function CameraPage() {
   };
   const startCamera = async (mode = facingMode) => {
     if (typeof window === "undefined" || !navigator.mediaDevices) return;
-    
+
     const requestId = ++activeRequestIdRef.current;
-    
+
     // Stop the previous stream immediately
     stopActiveStream();
 
     // Short delay to let the OS release the camera resource
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise((resolve) => setTimeout(resolve, 200));
 
     // If a newer request was initiated during our delay, abort
     if (requestId !== activeRequestIdRef.current) {
@@ -172,7 +171,7 @@ export default function CameraPage() {
 
       // If a newer request was initiated during getUserMedia, stop this stream and abort
       if (requestId !== activeRequestIdRef.current) {
-        mediaStream.getTracks().forEach(track => track.stop());
+        mediaStream.getTracks().forEach((track) => track.stop());
         return;
       }
 
@@ -230,14 +229,19 @@ export default function CameraPage() {
       canvas.height = video.videoHeight;
 
       // 1. Filtre argentique : Fort contraste, saturation réduite, ton légèrement chaud
-      context.filter = "contrast(1.35) saturate(0.75) sepia(0.15) brightness(1.15)";
+      context.filter =
+        "contrast(1.35) saturate(0.75) sepia(0.15) brightness(1.15)";
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
       context.filter = "none";
 
       // 2. Effet de Flash (centre légèrement surexposé)
       const flashGradient = context.createRadialGradient(
-        canvas.width / 2, canvas.height * 0.4, 0,
-        canvas.width / 2, canvas.height * 0.4, canvas.height * 0.4
+        canvas.width / 2,
+        canvas.height * 0.4,
+        0,
+        canvas.width / 2,
+        canvas.height * 0.4,
+        canvas.height * 0.4,
       );
       flashGradient.addColorStop(0, "rgba(255,255,255,0.15)");
       flashGradient.addColorStop(1, "rgba(255,255,255,0)");
@@ -246,8 +250,12 @@ export default function CameraPage() {
 
       // 3. Vignettage (bords sombres et légèrement verdâtres typiques des jetables)
       const vignette = context.createRadialGradient(
-        canvas.width / 2, canvas.height / 2, canvas.height * 0.3,
-        canvas.width / 2, canvas.height / 2, canvas.height * 0.8
+        canvas.width / 2,
+        canvas.height / 2,
+        canvas.height * 0.3,
+        canvas.width / 2,
+        canvas.height / 2,
+        canvas.height * 0.8,
       );
       vignette.addColorStop(0, "rgba(0,0,0,0)");
       vignette.addColorStop(1, "rgba(0,20,10,0.6)");
@@ -259,7 +267,9 @@ export default function CameraPage() {
         const x = Math.random() * canvas.width;
         const y = Math.random() * canvas.height;
         const isDark = Math.random() > 0.5;
-        context.fillStyle = isDark ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.06)";
+        context.fillStyle = isDark
+          ? "rgba(0,0,0,0.08)"
+          : "rgba(255,255,255,0.06)";
         context.fillRect(x, y, 2, 2);
       }
 
@@ -345,7 +355,10 @@ export default function CameraPage() {
     const pending = await getPendingPhotos();
     for (const photo of pending) {
       try {
-        const cloudinaryData = await uploadToCloudinary(photo.blob, photo.eventId);
+        const cloudinaryData = await uploadToCloudinary(
+          photo.blob,
+          photo.eventId,
+        );
         await takePhotoMutation({
           eventId: photo.eventId,
           guestId: photo.guestId,
@@ -375,7 +388,9 @@ export default function CameraPage() {
 
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/20 backdrop-blur-md border border-white/5">
           <Timer className="w-3.5 h-3.5 text-white/60" />
-          <span className="text-[11px] font-medium tracking-wide">{timeLeft || "Calcul en cours..."}</span>
+          <span className="text-[11px] font-medium tracking-wide">
+            {timeLeft || "Calcul en cours..."}
+          </span>
         </div>
 
         <button className="pointer-events-auto w-10 h-10 flex items-center justify-center rounded-full bg-black/20 backdrop-blur-md border border-white/10">
@@ -451,10 +466,8 @@ export default function CameraPage() {
                   )}
                 </button>
 
-
-
                 {/* Flip Camera */}
-                <button 
+                <button
                   onClick={toggleCamera}
                   className="pointer-events-auto w-10 h-10 flex items-center justify-center rounded-full bg-black/20 text-white/60 backdrop-blur-sm"
                 >
@@ -511,11 +524,16 @@ export default function CameraPage() {
         <div className="flex justify-center">
           <button
             onClick={capture}
-            disabled={remainingPoses === 0 || isUploading || isProcessing || timeLeft === "Expiré"}
+            disabled={
+              remainingPoses === 0 ||
+              isUploading ||
+              isProcessing ||
+              timeLeft === "Expiré"
+            }
             className={clsx(
               "relative w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300",
               "before:absolute before:inset-0 before:rounded-full before:border-[3px] before:border-white/20 before:scale-110",
-              (remainingPoses === 0 || timeLeft === "Expired")
+              remainingPoses === 0 || timeLeft === "Expired"
                 ? "opacity-30 grayscale"
                 : "active:scale-95",
             )}
@@ -563,58 +581,6 @@ export default function CameraPage() {
       </footer>
 
       <canvas ref={canvasRef} className="hidden" />
-
-      {/* About Button */}
-      <button
-        onClick={() => setIsAboutOpen(true)}
-        className="fixed bottom-6 right-6 z-[60] w-10 h-10 flex items-center justify-center rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-lg transition-transform hover:scale-105 active:scale-95"
-      >
-        <HelpCircle className="w-5 h-5" />
-      </button>
-
-      {/* About Modal */}
-      <Modal isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)}>
-        <div className="space-y-4">
-          <div className="text-center space-y-2 mb-6">
-            <h2 className="text-2xl font-display text-white">À propos</h2>
-            <p className="text-sm text-white/50">Blink (Prototype)</p>
-          </div>
-
-          <div className="space-y-4 text-sm text-white/80 leading-relaxed">
-            <p>
-              Salut ! Je m'appelle <span className="text-white font-medium">Thomas</span> et j'ai développé ce projet.
-            </p>
-            <p>
-              Blink est actuellement un <span className="text-white font-medium">prototype</span>. Il est normal de rencontrer quelques bugs ou comportements inattendus pendant son utilisation.
-            </p>
-            <p className="pt-2 border-t border-white/10">
-              Vos retours sont précieux ! N'hésitez pas à me contacter si vous rencontrez des problèmes ou si vous avez des suggestions :
-            </p>
-
-            <div className="flex flex-col gap-3 pt-2">
-              <a 
-                href="tel:0611597627" 
-                className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
-              >
-                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
-                  📞
-                </div>
-                <span className="font-medium">06 11 59 76 27</span>
-              </a>
-              
-              <a 
-                href="mailto:lythomm@gmail.com" 
-                className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
-              >
-                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
-                  ✉️
-                </div>
-                <span className="font-medium">lythomm@gmail.com</span>
-              </a>
-            </div>
-          </div>
-        </div>
-      </Modal>
     </main>
   );
 }

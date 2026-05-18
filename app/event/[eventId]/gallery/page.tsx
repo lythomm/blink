@@ -279,18 +279,24 @@ export default function GalleryPage() {
 
           <div className="space-y-4 text-sm text-white/80 leading-relaxed">
             <p>
-              Salut ! Je m'appelle <span className="text-white font-medium">Thomas</span> et j'ai développé ce projet.
+              Salut ! Je m'appelle{" "}
+              <span className="text-white font-medium">Thomas</span> et j'ai
+              développé ce projet.
             </p>
             <p>
-              Blink est actuellement un <span className="text-white font-medium">prototype</span>. Il est normal de rencontrer quelques bugs ou comportements inattendus pendant son utilisation.
+              Blink est encore un{" "}
+              <span className="text-white font-medium">prototype</span>. Il est
+              normal de rencontrer quelques bugs ou comportements inattendus
+              pendant son utilisation.
             </p>
             <p className="pt-2 border-t border-white/10">
-              Vos retours sont précieux ! N'hésitez pas à me contacter si vous rencontrez des problèmes ou si vous avez des suggestions :
+              Vos retours sont précieux ! N'hésitez pas à me contacter si vous
+              rencontrez des problèmes ou si vous avez des suggestions :
             </p>
 
             <div className="flex flex-col gap-3 pt-2">
-              <a 
-                href="tel:0611597627" 
+              <a
+                href="tel:0611597627"
                 className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
               >
                 <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
@@ -298,9 +304,9 @@ export default function GalleryPage() {
                 </div>
                 <span className="font-medium">06 11 59 76 27</span>
               </a>
-              
-              <a 
-                href="mailto:lythomm@gmail.com" 
+
+              <a
+                href="mailto:lythomm@gmail.com"
                 className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
               >
                 <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
