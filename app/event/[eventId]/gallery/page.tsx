@@ -272,9 +272,8 @@ export default function GalleryPage() {
       {/* About Modal */}
       <Modal isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)}>
         <div className="space-y-4">
-          <div className="text-center space-y-2 mb-6">
+          <div className="text-center mb-6">
             <h2 className="text-2xl font-display text-white">À propos</h2>
-            <p className="text-sm text-white/50">Blink (Prototype)</p>
           </div>
 
           <div className="space-y-4 text-sm text-white/80 leading-relaxed">
