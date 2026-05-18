@@ -18,6 +18,10 @@ export const metadata: Metadata = {
   title: "Blink - Caméra Jetable",
   description: "Capturez vos souvenirs d'événements avec style.",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({

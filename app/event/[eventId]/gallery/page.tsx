@@ -279,14 +279,14 @@ export default function GalleryPage() {
           <div className="space-y-4 text-sm text-white/80 leading-relaxed">
             <p>
               Salut ! Je m'appelle{" "}
-              <span className="text-white font-medium">Thomas</span> et j'ai
-              développé ce projet.
+              <span className="text-white font-medium">Thomas</span>, je suis le
+              développeur de Blink.
             </p>
             <p>
-              Blink est encore un{" "}
-              <span className="text-white font-medium">prototype</span>. Il est
-              normal de rencontrer quelques bugs ou comportements inattendus
-              pendant son utilisation.
+              L'app est encore au stade de{" "}
+              <span className="text-white font-medium">prototype</span>. Donc,
+              il est normal de rencontrer quelques bugs ou comportements
+              inattendus.
             </p>
             <p className="pt-2 border-t border-white/10">
               Vos retours sont précieux ! N'hésitez pas à me contacter si vous

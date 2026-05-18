@@ -27,7 +27,9 @@ export default function HomePage() {
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginName, setLoginName] = useState("");
-  const [loginFlow, setLoginFlow] = useState<"signIn" | "signUp" | "verify">("signIn");
+  const [loginFlow, setLoginFlow] = useState<"signIn" | "signUp" | "verify">(
+    "signIn",
+  );
   const [otpCode, setOtpCode] = useState("");
   const [loginError, setLoginError] = useState("");
 
@@ -145,12 +147,17 @@ export default function HomePage() {
       setIsLoading(false);
     } catch (err: any) {
       const msg = err.message || "";
-      if (msg.includes("Invalid password") || msg.includes("Invalid credentials")) {
+      if (
+        msg.includes("Invalid password") ||
+        msg.includes("Invalid credentials")
+      ) {
         setLoginError("Email ou mot de passe incorrect.");
       } else if (msg.includes("already")) {
         setLoginError("L'email est déjà utilisé.");
       } else if (msg.includes("Failed to send OTP email")) {
-        setLoginError("Erreur lors de l'envoi de l'email. Veuillez réessayer plus tard.");
+        setLoginError(
+          "Erreur lors de l'envoi de l'email. Veuillez réessayer plus tard.",
+        );
       } else if (msg.includes("InvalidAccountId")) {
         setLoginError("Aucun compte valide trouvé avec ces identifiants.");
       } else {
@@ -228,7 +235,7 @@ export default function HomePage() {
             <div className="relative group">
               <input
                 type="text"
-                placeholder="Code de l'événement"
+                placeholder="Code"
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
                 className="blink-input !h-20 !text-3xl font-display uppercase tracking-widest text-center"
@@ -300,8 +307,8 @@ export default function HomePage() {
       </footer>
 
       {/* Login Modal */}
-      <Modal 
-        isOpen={isLoginOpen} 
+      <Modal
+        isOpen={isLoginOpen}
         onClose={() => {
           if (!isLoading) {
             setIsLoginOpen(false);
@@ -314,16 +321,13 @@ export default function HomePage() {
         }}
         maxWidth="md"
       >
-        <form
-          onSubmit={handleLoginSubmit}
-          className="space-y-6 text-left"
-        >
+        <form onSubmit={handleLoginSubmit} className="space-y-6 text-left">
           <div className="space-y-2">
             <h2 className="text-3xl font-display text-white">
-              {loginFlow === "verify" 
+              {loginFlow === "verify"
                 ? "Vérification"
-                : loginFlow === "signIn" 
-                  ? "Se connecter" 
+                : loginFlow === "signIn"
+                  ? "Se connecter"
                   : "S'inscrire"}
             </h2>
             <p className="text-xs text-white/40 leading-relaxed">
@@ -413,8 +417,10 @@ export default function HomePage() {
           <button
             type="submit"
             disabled={
-              isLoading || 
-              (loginFlow === "verify" ? !otpCode : (!loginEmail || !loginPassword))
+              isLoading ||
+              (loginFlow === "verify"
+                ? !otpCode
+                : !loginEmail || !loginPassword)
             }
             className="btn-once-primary w-full justify-center cursor-pointer"
           >
@@ -433,9 +439,7 @@ export default function HomePage() {
                 type="button"
                 disabled={isLoading}
                 onClick={() => {
-                  setLoginFlow(
-                    loginFlow === "signIn" ? "signUp" : "signIn",
-                  );
+                  setLoginFlow(loginFlow === "signIn" ? "signUp" : "signIn");
                   setLoginError("");
                 }}
                 className="text-xs text-white/40 hover:text-white transition-colors cursor-pointer"
@@ -443,16 +447,12 @@ export default function HomePage() {
                 {loginFlow === "signIn" ? (
                   <>
                     Pas encore de compte ?{" "}
-                    <span className="text-white underline">
-                      S'inscrire
-                    </span>
+                    <span className="text-white underline">S'inscrire</span>
                   </>
                 ) : (
                   <>
                     Déjà un compte ?{" "}
-                    <span className="text-white underline">
-                      Se connecter
-                    </span>
+                    <span className="text-white underline">Se connecter</span>
                   </>
                 )}
               </button>
