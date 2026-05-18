@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useMutation } from "convex/react";
+import { useMutation, useAction, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useRouter } from "next/navigation";
 import { MoveRight, ArrowLeft, Check, X } from "lucide-react";
@@ -24,6 +24,9 @@ export default function CreateEventForm({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const user = useQuery(api.users.current);
+  const sendWelcomeKit = useAction(api.actions.emails.sendWelcomeKitEmail);
+
   // Form states
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
@@ -38,32 +41,11 @@ export default function CreateEventForm({
   const createMutation = useMutation(api.events.createEvent);
   const joinMutation = useMutation(api.events.joinEvent);
 
-  const handleCreate = async (e?: React.FormEvent | React.MouseEvent) => {
-    e?.preventDefault();
-    if (createStep !== 4 || isLoading) return;
-
-    if (!name || !slug) {
-      setError("Veuillez remplir tous les champs.");
-      return;
-    }
-    if (slug.length < 4 || slug.length > 16) {
-      setError("Le code doit faire entre 4 et 16 caractères.");
-      return;
-    }
-    if (!endDateTime) {
-      setError("Veuillez définir une date de fin.");
-      return;
-    }
-
-    const endsAt = new Date(endDateTime).getTime();
-    if (endsAt <= Date.now()) {
-      setError("La date de fin doit être dans le futur.");
-      return;
-    }
-
+  const performEventCreation = async () => {
     setIsLoading(true);
     setError("");
     try {
+      const endsAt = new Date(endDateTime).getTime();
       await createMutation({
         name,
         slug,
@@ -71,6 +53,23 @@ export default function CreateEventForm({
         maxPhotosPerParticipant: maxPhotos,
       });
       await joinMutation({ eventId: slug, guestId: getGuestId() });
+
+      // Send Welcome Kit email if email is available
+      const targetEmail = user?.email;
+      if (targetEmail) {
+        try {
+          const targetName = user?.name || targetEmail.split("@")[0];
+          await sendWelcomeKit({
+            email: targetEmail,
+            userName: targetName,
+            eventName: name,
+            eventSlug: slug,
+          });
+        } catch (emailErr) {
+          console.error("Error sending Welcome Kit email:", emailErr);
+        }
+      }
+
       setCreateStep(5);
       setIsLoading(false);
     } catch (err: any) {
@@ -82,6 +81,11 @@ export default function CreateEventForm({
       }
       setIsLoading(false);
     }
+  };
+
+  const handleCreateStep4Submit = async (e?: React.FormEvent | React.MouseEvent) => {
+    e?.preventDefault();
+    await performEventCreation();
   };
 
   return (
@@ -243,6 +247,7 @@ export default function CreateEventForm({
                   </button>
                 ))}
               </div>
+
               {error && createStep === 4 && (
                 <p className="text-[10px] text-red-500 font-bold uppercase tracking-widest mt-6">
                   {error}
@@ -357,7 +362,7 @@ export default function CreateEventForm({
                 setError("");
                 setCreateStep((prev) => prev + 1);
               } else if (createStep === 4) {
-                handleCreate(e);
+                handleCreateStep4Submit(e);
               } else {
                 router.push(`/event/${slug}/gallery`);
               }

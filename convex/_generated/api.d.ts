@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as actions_emails from "../actions/emails.js";
 import type * as auth from "../auth.js";
 import type * as cloudinary from "../cloudinary.js";
 import type * as events from "../events.js";
@@ -22,6 +23,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "actions/emails": typeof actions_emails;
   auth: typeof auth;
   cloudinary: typeof cloudinary;
   events: typeof events;

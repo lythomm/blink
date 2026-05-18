@@ -28,4 +28,9 @@ export default defineSchema({
     joinedAt: v.number(),
   }).index("by_event", ["eventId"])
     .index("by_event_and_guest", ["eventId", "guestId"]),
+  otps: defineTable({
+    email: v.string(),
+    code: v.string(),
+    expiresAt: v.number(),
+  }).index("by_email", ["email"]),
 });
