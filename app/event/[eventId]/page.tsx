@@ -22,7 +22,6 @@ import {
   Timer,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "sonner";
 import clsx from "clsx";
 import { GuestNameModal } from "@/app/components/GuestNameModal";
 
