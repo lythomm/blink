@@ -48,7 +48,7 @@ export function GuestNameModal({ eventId, guestId }: GuestNameModalProps) {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={() => setIsOpen(false)}>
+    <Modal isOpen={isOpen}>
       <div className="space-y-6 text-center">
         <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-2">
           <User className="w-8 h-8 text-black" />
