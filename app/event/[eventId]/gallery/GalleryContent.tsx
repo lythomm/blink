@@ -31,6 +31,7 @@ import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 import { GuestNameModal } from "@/app/components/GuestNameModal";
 import { useToast } from "@/app/components/Toast";
+import { PWAInstallBanner } from "@/app/components/PWAInstallBanner";
 
 export default function GalleryContent() {
   const { eventId } = useParams() as { eventId: string };
@@ -349,6 +350,8 @@ export default function GalleryContent() {
           </div>
         </div>
       </Modal>
+
+      <PWAInstallBanner />
     </main>
   );
 }

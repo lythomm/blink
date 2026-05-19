@@ -10,6 +10,7 @@ import { getGuestId } from "@/app/lib/utils";
 import { useConvexAuth } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { Modal } from "./components/Modal";
+import { PWAInstallBanner } from "./components/PWAInstallBanner";
 
 export default function HomeContent() {
   const router = useRouter();
@@ -432,6 +433,8 @@ export default function HomeContent() {
           )}
         </form>
       </Modal>
+
+      <PWAInstallBanner />
     </main>
   );
 }

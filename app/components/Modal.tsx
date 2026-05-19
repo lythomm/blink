@@ -45,7 +45,7 @@ export function Modal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/80 backdrop-blur-sm cursor-pointer"
+            className={`absolute inset-0 bg-black/80 backdrop-blur-sm ${onClose ? "cursor-pointer" : "cursor-default"}`}
           />
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
