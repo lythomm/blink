@@ -235,13 +235,13 @@ export default function GalleryContent() {
                 </div>
 
                 {/* Actions Overlay */}
-                {photo.guestId === guestId && (
+                {/* {photo.guestId === guestId && (
                   <div className="absolute bottom-2 right-2">
                     <button
-                      // onClick={(e) => {
-                      //   e.stopPropagation();
-                      //   handleDelete(photo._id, photo.cloudinaryId);
-                      // }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(photo._id, photo.cloudinaryId);
+                      }}
                       disabled={deletingId === photo._id}
                       className="p-2 bg-black/50 backdrop-blur-xl rounded-full transition-colors pointer-events-auto cursor-pointer"
                     >
@@ -252,7 +252,7 @@ export default function GalleryContent() {
                       )}
                     </button>
                   </div>
-                )}
+                )} */}
               </motion.div>
             ))}
           </AnimatePresence>
