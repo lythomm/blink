@@ -3,10 +3,13 @@
 import { useParams, useRouter } from "next/navigation";
 import { useAction, useMutation, useQuery, useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 import { getGuestId } from "@/app/lib/utils";
-import { CldImage, getCldImageUrl } from "next-cloudinary";
-
-const PHOTO_EFFECTS = [{ art: "primavera" }, { noise: "20" }];
+import { getCldImageUrl } from "next-cloudinary";
+import {
+  CloudinaryImage,
+  PHOTO_EFFECTS,
+} from "@/app/components/CloudinaryImage";
 
 import {
   ArrowLeft,
@@ -19,14 +22,11 @@ import {
   Camera,
   Loader2,
   Trash2,
-  Film,
   HelpCircle,
-  X,
 } from "lucide-react";
 import { Modal } from "@/app/components/Modal";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
-import clsx from "clsx";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 import { GuestNameModal } from "@/app/components/GuestNameModal";
@@ -51,12 +51,13 @@ export default function GalleryContent() {
 
   const isCreator = user && event && user._id === event.creatorId;
 
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<Id<"photos"> | null>(null);
   const [timeLeft, setTimeLeft] = useState<string>("");
   const [index, setIndex] = useState(-1);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
+  const [hasCloudinaryError, setHasCloudinaryError] = useState(false);
 
-  const handleDelete = async (photoId: any, cloudinaryId: string) => {
+  const handleDelete = async (photoId: Id<"photos">, cloudinaryId: string) => {
     if (!confirm("Effacer ce souvenir définitivement ?")) return;
     setDeletingId(photoId);
     try {
@@ -75,7 +76,7 @@ export default function GalleryContent() {
     if (eventId && guestId) {
       joinMutation({ eventId, guestId });
     }
-  }, [eventId, guestId]);
+  }, [eventId, guestId, joinMutation]);
 
   useEffect(() => {
     if (!event?.endsAt) return;
@@ -173,7 +174,7 @@ export default function GalleryContent() {
               const url = `${window.location.origin}/event/${eventId}/gallery`;
               await navigator.clipboard.writeText(url);
               toast.success("Lien d'invitation copié 🔗");
-            } catch (err) {
+            } catch {
               toast.error("Impossible de copier le lien.");
             }
           }}
@@ -214,31 +215,22 @@ export default function GalleryContent() {
                 className="relative aspect-[3/4] rounded-2xl overflow-hidden group shadow-2xl border border-white/5 cursor-zoom-in"
                 onClick={() => setIndex(idx)}
               >
-                <CldImage
+                <CloudinaryImage
                   src={photo.cloudinaryId}
-                  deliveryType="upload"
                   alt="Captured moment"
                   fill
+                  aspectRatio="3:4"
                   className="object-cover"
                   sizes="(max-width: 768px) 50vw, 33vw"
                   priority={idx < 4}
-                  effects={PHOTO_EFFECTS}
-                  data-debug-url={getCldImageUrl({
-                    src: photo.cloudinaryId,
-                    deliveryType: "upload",
-                    width: 600,
-                    height: 800,
-                    crop: "fill",
-                    effects: PHOTO_EFFECTS,
-                  })}
+                  effects={hasCloudinaryError ? [] : PHOTO_EFFECTS}
+                  onError={() => setHasCloudinaryError(true)}
                 />
 
                 {/* Guest Label */}
                 <div className="absolute top-2 left-2">
                   <span className="text-[10px] font-medium text-white bg-black/10 px-2.5 py-1 rounded-full border border-white/10">
-                    {photo.guestId === guestId
-                      ? "Moi"
-                      : (photo as any).authorName}
+                    {photo.guestId === guestId ? "Moi" : photo.authorName}
                   </span>
                 </div>
 
@@ -246,10 +238,10 @@ export default function GalleryContent() {
                 {photo.guestId === guestId && (
                   <div className="absolute bottom-2 right-2">
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(photo._id, photo.cloudinaryId);
-                      }}
+                      // onClick={(e) => {
+                      //   e.stopPropagation();
+                      //   handleDelete(photo._id, photo.cloudinaryId);
+                      // }}
                       disabled={deletingId === photo._id}
                       className="p-2 bg-black/50 backdrop-blur-xl rounded-full transition-colors pointer-events-auto cursor-pointer"
                     >
@@ -296,7 +288,7 @@ export default function GalleryContent() {
             width: 1200,
             height: 1600,
             crop: "fill",
-            effects: PHOTO_EFFECTS,
+            effects: hasCloudinaryError ? [] : PHOTO_EFFECTS,
           }),
         }))}
       />

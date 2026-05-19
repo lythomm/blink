@@ -25,11 +25,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 import { GuestNameModal } from "@/app/components/GuestNameModal";
 import { useToast } from "@/app/components/Toast";
-import { CldImage } from "next-cloudinary";
+import { CloudinaryImage } from "@/app/components/CloudinaryImage";
 
-const PHOTO_EFFECTS = [{ art: "primavera" }, { noise: "20" }];
-
-interface NavigatorWithWakeLock extends Navigator {
+interface NavigatorWithWakeLock {
   wakeLock?: {
     request(type: "screen"): Promise<unknown>;
   };
@@ -53,7 +51,9 @@ export default function CameraContent() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [isOnline, setIsOnline] = useState(() => typeof window !== "undefined" ? navigator.onLine : true);
+  const [isOnline, setIsOnline] = useState(() =>
+    typeof window !== "undefined" ? navigator.onLine : true,
+  );
   const [flashEnabled, setFlashEnabled] = useState(true);
   const [facingMode, setFacingMode] = useState<"user" | "environment">(
     "environment",
@@ -73,7 +73,7 @@ export default function CameraContent() {
 
   // Functions (with useCallback to avoid re-renders and satisfy react-hooks/exhaustive-deps)
   const setupWakeLock = useCallback(async () => {
-    const nav = navigator as NavigatorWithWakeLock;
+    const nav = navigator as unknown as NavigatorWithWakeLock;
     if (nav.wakeLock) {
       try {
         await nav.wakeLock.request("screen");
@@ -97,49 +97,52 @@ export default function CameraContent() {
     }, 0);
   }, []);
 
-  const startCamera = useCallback(async (mode = facingMode) => {
-    if (typeof window === "undefined" || !navigator.mediaDevices) return;
+  const startCamera = useCallback(
+    async (mode = facingMode) => {
+      if (typeof window === "undefined" || !navigator.mediaDevices) return;
 
-    const requestId = ++activeRequestIdRef.current;
+      const requestId = ++activeRequestIdRef.current;
 
-    // Stop the previous stream immediately
-    stopActiveStream();
+      // Stop the previous stream immediately
+      stopActiveStream();
 
-    // Short delay to let the OS release the camera resource
-    await new Promise((resolve) => setTimeout(resolve, 200));
+      // Short delay to let the OS release the camera resource
+      await new Promise((resolve) => setTimeout(resolve, 200));
 
-    // If a newer request was initiated during our delay, abort
-    if (requestId !== activeRequestIdRef.current) {
-      return;
-    }
-
-    try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: mode,
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-        },
-        audio: false,
-      });
-
-      // If a newer request was initiated during getUserMedia, stop this stream and abort
+      // If a newer request was initiated during our delay, abort
       if (requestId !== activeRequestIdRef.current) {
-        mediaStream.getTracks().forEach((track) => track.stop());
         return;
       }
 
-      activeStreamRef.current = mediaStream;
-      setStream(mediaStream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
+      try {
+        const mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: mode,
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+          },
+          audio: false,
+        });
+
+        // If a newer request was initiated during getUserMedia, stop this stream and abort
+        if (requestId !== activeRequestIdRef.current) {
+          mediaStream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+
+        activeStreamRef.current = mediaStream;
+        setStream(mediaStream);
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream;
+        }
+      } catch (err) {
+        if (requestId === activeRequestIdRef.current) {
+          console.error("Camera access failed:", err);
+        }
       }
-    } catch (err) {
-      if (requestId === activeRequestIdRef.current) {
-        console.error("Camera access failed:", err);
-      }
-    }
-  }, [facingMode, stopActiveStream]);
+    },
+    [facingMode, stopActiveStream],
+  );
 
   const uploadToCloudinary = useCallback(async (blob: Blob, eId: string) => {
     const timestamp = Math.round(new Date().getTime() / 1000);
@@ -197,31 +200,34 @@ export default function CameraContent() {
     }
   }, [takePhotoMutation, toast, uploadToCloudinary]);
 
-  const handleUpload = useCallback(async (blob: Blob) => {
-    setIsUploading(true);
-    if (!navigator.onLine) {
-      await savePendingPhoto(blob, eventId, guestId);
-      setIsUploading(false);
-      toast.warning("Photo sauvegardée localement (hors-ligne)");
-      return;
-    }
+  const handleUpload = useCallback(
+    async (blob: Blob) => {
+      setIsUploading(true);
+      if (!navigator.onLine) {
+        await savePendingPhoto(blob, eventId, guestId);
+        setIsUploading(false);
+        toast.warning("Photo sauvegardée localement (hors-ligne)");
+        return;
+      }
 
-    try {
-      const cloudinaryData = await uploadToCloudinary(blob, eventId);
-      await takePhotoMutation({
-        eventId,
-        guestId,
-        cloudinaryId: cloudinaryData.public_id,
-      });
-    } catch (err) {
-      console.error("Upload failed, saving locally:", err);
-      await savePendingPhoto(blob, eventId, guestId);
-      toast.warning("Envoi échoué, cliché sauvegardé localement");
-    } finally {
-      setIsUploading(false);
-      setIsProcessing(false);
-    }
-  }, [eventId, guestId, takePhotoMutation, toast, uploadToCloudinary]);
+      try {
+        const cloudinaryData = await uploadToCloudinary(blob, eventId);
+        await takePhotoMutation({
+          eventId,
+          guestId,
+          cloudinaryId: cloudinaryData.public_id,
+        });
+      } catch (err) {
+        console.error("Upload failed, saving locally:", err);
+        await savePendingPhoto(blob, eventId, guestId);
+        toast.warning("Envoi échoué, cliché sauvegardé localement");
+      } finally {
+        setIsUploading(false);
+        setIsProcessing(false);
+      }
+    },
+    [eventId, guestId, takePhotoMutation, toast, uploadToCloudinary],
+  );
 
   const capture = useCallback(async () => {
     if (!videoRef.current || !canvasRef.current || isProcessing || isUploading)
@@ -246,7 +252,9 @@ export default function CameraContent() {
     // If flash is enabled and we are on back camera, physically turn on the torch first
     if (flashEnabled && facingMode === "environment" && track) {
       try {
-        await track.applyConstraints({ advanced: [{ torch: true } as TorchConstraintSet] });
+        await track.applyConstraints({
+          advanced: [{ torch: true } as TorchConstraintSet],
+        });
         // Small delay to let the flashlight fire and illuminate the scene before capturing
         await new Promise((resolve) => setTimeout(resolve, 250));
       } catch (e) {
@@ -264,7 +272,9 @@ export default function CameraContent() {
       // Turn off physical torch immediately after capturing the canvas frame
       if (flashEnabled && facingMode === "environment" && track) {
         try {
-          await track.applyConstraints({ advanced: [{ torch: false } as TorchConstraintSet] });
+          await track.applyConstraints({
+            advanced: [{ torch: false } as TorchConstraintSet],
+          });
         } catch (e) {
           console.log("Failed to turn off physical flash:", e);
         }
@@ -282,7 +292,16 @@ export default function CameraContent() {
     } else {
       setIsProcessing(false);
     }
-  }, [facingMode, flashEnabled, handleUpload, isProcessing, isUploading, remainingPoses, stream, toast]);
+  }, [
+    facingMode,
+    flashEnabled,
+    handleUpload,
+    isProcessing,
+    isUploading,
+    remainingPoses,
+    stream,
+    toast,
+  ]);
 
   const toggleCamera = useCallback(() => {
     const newMode = facingMode === "user" ? "environment" : "user";
@@ -548,13 +567,10 @@ export default function CameraContent() {
                       zIndex: 10 - i,
                     }}
                   >
-                    <CldImage
+                    <CloudinaryImage
                       src={photo.cloudinaryId}
-                      deliveryType="upload"
                       width={100}
                       height={100}
-                      crop="fill"
-                      effects={PHOTO_EFFECTS}
                       alt="Preview"
                       className="w-full h-full object-cover"
                     />

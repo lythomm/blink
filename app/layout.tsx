@@ -28,15 +28,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ConvexAuthNextjsServerProvider>
-      <html
-        lang="fr"
-        className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-      >
-        <body className="min-h-screen bg-neutral text-primary antialiased selection:bg-white selection:text-black flex flex-col overflow-x-hidden">
+    <html
+      lang="fr"
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+    >
+      <body className="min-h-screen bg-neutral text-primary antialiased selection:bg-white selection:text-black flex flex-col overflow-x-hidden">
+        <ConvexAuthNextjsServerProvider>
           <ClientLayoutWrapper>{children}</ClientLayoutWrapper>
-        </body>
-      </html>
-    </ConvexAuthNextjsServerProvider>
+        </ConvexAuthNextjsServerProvider>
+      </body>
+    </html>
   );
 }
