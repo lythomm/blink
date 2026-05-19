@@ -30,10 +30,8 @@ export const getPhotos = query({
 export const getRemainingPoses = query({
   args: { eventId: v.string(), guestId: v.string() },
   handler: async (ctx, args) => {
-    const event = await ctx.db
-      .query("events")
-      .withIndex("by_slug", (q) => q.eq("slug", args.eventId))
-      .unique();
+    const eventIdNormalized = ctx.db.normalizeId("events", args.eventId);
+    const event = eventIdNormalized ? await ctx.db.get(eventIdNormalized) : null;
 
     const photos = await ctx.db
       .query("photos")
@@ -54,10 +52,8 @@ export const takePhoto = mutation({
     cloudinaryId: v.string(),
   },
   handler: async (ctx, args) => {
-    const event = await ctx.db
-      .query("events")
-      .withIndex("by_slug", (q) => q.eq("slug", args.eventId))
-      .unique();
+    const eventIdNormalized = ctx.db.normalizeId("events", args.eventId);
+    const event = eventIdNormalized ? await ctx.db.get(eventIdNormalized) : null;
 
     const existingPhotos = await ctx.db
       .query("photos")

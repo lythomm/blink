@@ -6,13 +6,11 @@ export default defineSchema({
   ...authTables,
   events: defineTable({
     name: v.string(),
-    slug: v.string(),
     createdAt: v.number(),
     endsAt: v.number(),
     maxPhotosPerParticipant: v.number(),
     creatorId: v.string(),
   })
-    .index("by_slug", ["slug"])
     .index("by_creator", ["creatorId"]),
   photos: defineTable({
     eventId: v.string(),

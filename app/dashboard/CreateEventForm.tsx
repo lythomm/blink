@@ -31,14 +31,14 @@ export default function CreateEventForm({
 
   // Form states
   const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
   const [endDateTime, setEndDateTime] = useState("");
   const [maxPhotos, setMaxPhotos] = useState(5);
+  const [createdEventId, setCreatedEventId] = useState("");
 
   // Clear error when inputs change
   useEffect(() => {
     setError("");
-  }, [name, slug, endDateTime]);
+  }, [name, endDateTime]);
 
   const createMutation = useMutation(api.events.createEvent);
   const joinMutation = useMutation(api.events.joinEvent);
@@ -48,13 +48,13 @@ export default function CreateEventForm({
     setError("");
     try {
       const endsAt = new Date(endDateTime).getTime();
-      await createMutation({
+      const newEventId = await createMutation({
         name,
-        slug,
         endsAt,
         maxPhotosPerParticipant: maxPhotos,
       });
-      await joinMutation({ eventId: slug, guestId: getGuestId() });
+      await joinMutation({ eventId: newEventId, guestId: getGuestId() });
+      setCreatedEventId(newEventId);
 
       // Send Welcome Kit email if email is available (disabled for now)
       /*
@@ -74,15 +74,10 @@ export default function CreateEventForm({
       }
       */
 
-      setCreateStep(5);
+      setCreateStep(4);
       setIsLoading(false);
     } catch (err: any) {
-      const errorMessage = err.message || "";
-      if (errorMessage.includes("déjà utilisé")) {
-        setError("Ce code d'événement est déjà utilisé.");
-      } else {
-        setError("Une erreur est survenue lors de la création.");
-      }
+      setError(err.message || "Une erreur est survenue lors de la création.");
       setIsLoading(false);
     }
   };
@@ -149,38 +144,6 @@ export default function CreateEventForm({
               className="space-y-8"
             >
               <h2 className="text-4xl md:text-5xl font-display leading-tight">
-                Choisissez un code d'accès unique
-              </h2>
-              <p className="text-sm text-white/40">
-                Ce code permettra à vos invités de rejoindre
-                <br />
-                l'événement et de capturer des souvenirs.
-              </p>
-              <input
-                type="text"
-                placeholder="Ex: alice-2026"
-                value={slug}
-                onChange={(e) => setSlug(e.target.value.replace(/\s+/g, ""))}
-                maxLength={16}
-                className="blink-input uppercase tracking-widest"
-              />
-              {error && createStep === 2 && (
-                <p className="text-[10px] text-red-500 font-bold uppercase tracking-widest mt-2">
-                  {error}
-                </p>
-              )}
-            </motion.div>
-          )}
-
-          {createStep === 3 && (
-            <motion.div
-              key="step3"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="space-y-8"
-            >
-              <h2 className="text-4xl md:text-5xl font-display leading-tight">
                 Quand la pellicule
                 <br />
                 sera-t-elle prête ?
@@ -209,7 +172,7 @@ export default function CreateEventForm({
                   </span>
                 </div>
               </div>
-              {error && createStep === 3 && (
+              {error && createStep === 2 && (
                 <p className="text-[10px] text-red-500 font-bold uppercase tracking-widest mt-2">
                   {error}
                 </p>
@@ -217,9 +180,9 @@ export default function CreateEventForm({
             </motion.div>
           )}
 
-          {createStep === 4 && (
+          {createStep === 3 && (
             <motion.div
-              key="step4"
+              key="step3"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
@@ -249,16 +212,16 @@ export default function CreateEventForm({
                 ))}
               </div>
 
-              {error && createStep === 4 && (
+              {error && createStep === 3 && (
                 <p className="text-[10px] text-red-500 font-bold uppercase tracking-widest mt-6">
                   {error}
                 </p>
               )}
             </motion.div>
           )}
-          {createStep === 5 && (
+          {createStep === 4 && (
             <motion.div
-              key="step5"
+              key="step4"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
@@ -277,7 +240,7 @@ export default function CreateEventForm({
                 </h2>
                 <p className="text-sm text-white/40 px-8">
                   Votre événement <span className="text-white">"{name}"</span> a
-                  été créé. Partagez ce code avec vos invités.
+                  été créé. Partagez ce lien avec vos invités.
                 </p>
               </div>
 
@@ -297,9 +260,9 @@ export default function CreateEventForm({
                   type="button"
                   onClick={() => {
                     navigator.clipboard.writeText(
-                      `${window.location.origin}/join/${slug}`,
+                      `${window.location.origin}/event/${createdEventId}/gallery`,
                     );
-                    toast.success("Lien copié dans le presse-papier !");
+                    toast.success("Lien copié");
                   }}
                   className="flex items-center justify-center gap-2 py-3 px-4 bg-white/5 border border-white/10 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-colors"
                 >
@@ -307,9 +270,7 @@ export default function CreateEventForm({
                 </button>
                 <button
                   type="button"
-                  onClick={() =>
-                    toast.success("QR Code enregistré avec succès !")
-                  }
+                  onClick={() => toast.success("QR Code enregistré")}
                   className="flex items-center justify-center gap-2 py-3 px-4 bg-white/5 border border-white/10 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-colors"
                 >
                   Enregistrer QR
@@ -324,7 +285,7 @@ export default function CreateEventForm({
         {/* Step Indicator above the border */}
         <div className="flex justify-center items-center mb-8">
           <div className="flex gap-2 items-center">
-            {[1, 2, 3, 4, 5].map((s) => (
+            {[1, 2, 3, 4].map((s) => (
               <div
                 key={s}
                 className={clsx(
@@ -342,7 +303,7 @@ export default function CreateEventForm({
 
         <div className="flex justify-between items-center border-t border-white/5 pt-8">
           <div className="w-24">
-            {createStep > 1 && createStep < 5 && (
+            {createStep > 1 && createStep < 4 && (
               <button
                 type="button"
                 onClick={() => setCreateStep(createStep - 1)}
@@ -357,22 +318,16 @@ export default function CreateEventForm({
           <button
             type="button"
             onClick={(e) => {
-              if (createStep < 4) {
+              if (createStep < 3) {
                 if (createStep === 1 && !name) return setError("Nom requis");
-                if (createStep === 2) {
-                  if (!slug) return setError("Code requis");
-                  if (slug.length < 4) return setError("Minimum 4 caractères");
-                  if (slug.length > 16)
-                    return setError("Maximum 16 caractères");
-                }
-                if (createStep === 3 && !endDateTime)
+                if (createStep === 2 && !endDateTime)
                   return setError("Date requise");
                 setError("");
                 setCreateStep((prev) => prev + 1);
-              } else if (createStep === 4) {
+              } else if (createStep === 3) {
                 handleCreateStep4Submit(e);
               } else {
-                router.push(`/event/${slug}/gallery`);
+                router.push(`/event/${createdEventId}/gallery`);
               }
             }}
             disabled={isLoading}
@@ -380,9 +335,9 @@ export default function CreateEventForm({
           >
             {isLoading
               ? "..."
-              : createStep === 4
+              : createStep === 3
                 ? "Créer"
-                : createStep === 5
+                : createStep === 4
                   ? "Accéder"
                   : "Suivant"}
             <MoveRight className="w-4 h-4 transition-transform" />

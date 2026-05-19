@@ -13,7 +13,7 @@ import { Modal } from "./components/Modal";
 
 export default function HomeContent() {
   const router = useRouter();
-  const [slug, setSlug] = useState("");
+  const [eventId, setEventId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -33,7 +33,7 @@ export default function HomeContent() {
   const [otpCode, setOtpCode] = useState("");
   const [loginError, setLoginError] = useState("");
 
-  const existingEvent = useQuery(api.events.getEventBySlug, { slug });
+  const existingEvent = useQuery(api.events.getEventById, { id: eventId });
   const joinMutation = useMutation(api.events.joinEvent);
 
   useEffect(() => {
@@ -45,7 +45,7 @@ export default function HomeContent() {
   // Clear errors when inputs change
   useEffect(() => {
     setError("");
-  }, [slug]);
+  }, [eventId]);
 
   useEffect(() => {
     setLoginError("");
@@ -53,14 +53,14 @@ export default function HomeContent() {
 
   const handleJoinDirect = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!slug) return;
+    if (!eventId) return;
     setIsLoading(true);
     if (existingEvent) {
       await joinMutation({
-        eventId: existingEvent.slug,
+        eventId: existingEvent._id,
         guestId: getGuestId(),
       });
-      router.push(`/event/${existingEvent.slug}/gallery`);
+      router.push(`/event/${existingEvent._id}/gallery`);
     } else {
       setError("Événement introuvable.");
       setIsLoading(false);
@@ -235,10 +235,10 @@ export default function HomeContent() {
             <div className="relative group">
               <input
                 type="text"
-                placeholder="Code"
-                value={slug}
-                onChange={(e) => setSlug(e.target.value)}
-                className="blink-input !h-20 !text-3xl font-display uppercase tracking-widest text-center"
+                placeholder="Identifiant de l'événement"
+                value={eventId}
+                onChange={(e) => setEventId(e.target.value)}
+                className="blink-input !h-20 !text-[15px] font-body uppercase tracking-wider text-center"
               />
               {error && (
                 <p className="absolute -bottom-6 left-0 right-0 text-[10px] text-red-500 font-bold uppercase tracking-widest">
@@ -248,7 +248,7 @@ export default function HomeContent() {
             </div>
             <button
               type="submit"
-              disabled={isLoading || !slug}
+              disabled={isLoading || !eventId}
               className="btn-once-primary flex items-center gap-3 w-full justify-center cursor-pointer"
             >
               {isLoading ? "Vérification..." : "Accéder à la galerie"}

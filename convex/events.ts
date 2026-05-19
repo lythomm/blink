@@ -2,16 +2,6 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
-export const getEventBySlug = query({
-  args: { slug: v.string() },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("events")
-      .withIndex("by_slug", (q) => q.eq("slug", args.slug.toLowerCase()))
-      .unique();
-  },
-});
-
 export const getEvent = query({
   args: { id: v.id("events") },
   handler: async (ctx, args) => {
@@ -19,10 +9,18 @@ export const getEvent = query({
   },
 });
 
+export const getEventById = query({
+  args: { id: v.string() },
+  handler: async (ctx, args) => {
+    const normalizedId = ctx.db.normalizeId("events", args.id);
+    if (!normalizedId) return null;
+    return await ctx.db.get(normalizedId);
+  },
+});
+
 export const createEvent = mutation({
   args: {
     name: v.string(),
-    slug: v.string(),
     endsAt: v.number(),
     maxPhotosPerParticipant: v.number(),
   },
@@ -32,21 +30,6 @@ export const createEvent = mutation({
       throw new Error("Vous devez être connecté pour créer un événement.");
     }
 
-    const slug = args.slug.toLowerCase().trim().replace(/\s+/g, "");
-    if (slug.length < 4 || slug.length > 16) {
-      throw new Error("Le code doit faire entre 4 et 16 caractères.");
-    }
-
-    // Check if slug already exists
-    const existing = await ctx.db
-      .query("events")
-      .withIndex("by_slug", (q) => q.eq("slug", slug))
-      .unique();
-
-    if (existing) {
-      throw new Error("Cet identifiant d'événement est déjà utilisé.");
-    }
-
     const now = Date.now();
     if (args.endsAt <= now) {
       throw new Error("La date de fin ne peut pas être dans le passé.");
@@ -54,7 +37,6 @@ export const createEvent = mutation({
 
     return await ctx.db.insert("events", {
       name: args.name,
-      slug,
       createdAt: now,
       endsAt: args.endsAt,
       maxPhotosPerParticipant: args.maxPhotosPerParticipant,
@@ -110,13 +92,13 @@ export const listUserEvents = query({
       events.map(async (event) => {
         const photos = await ctx.db
           .query("photos")
-          .withIndex("by_event", (q) => q.eq("eventId", event.slug))
+          .withIndex("by_event", (q) => q.eq("eventId", event._id))
           .order("desc")
           .collect();
 
         const participants = await ctx.db
           .query("participants")
-          .withIndex("by_event", (q) => q.eq("eventId", event.slug))
+          .withIndex("by_event", (q) => q.eq("eventId", event._id))
           .collect();
 
         return {

@@ -1,6 +1,13 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  ReactNode,
+} from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, AlertCircle, AlertTriangle, X } from "lucide-react";
 import clsx from "clsx";
@@ -33,16 +40,19 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setMounted(true);
   }, []);
 
-  const addToast = useCallback((message: string, type: ToastType, duration = 4000) => {
-    const id = Math.random().toString(36).substring(2, 9);
-    setToasts((prev) => [...prev, { id, message, type, duration }]);
+  const addToast = useCallback(
+    (message: string, type: ToastType, duration = 4000) => {
+      const id = Math.random().toString(36).substring(2, 9);
+      setToasts((prev) => [...prev, { id, message, type, duration }]);
 
-    if (duration > 0) {
-      setTimeout(() => {
-        setToasts((prev) => prev.filter((t) => t.id !== id));
-      }, duration);
-    }
-  }, []);
+      if (duration > 0) {
+        setTimeout(() => {
+          setToasts((prev) => prev.filter((t) => t.id !== id));
+        }, duration);
+      }
+    },
+    [],
+  );
 
   const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -58,10 +68,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={{ toast, removeToast }}>
       {children}
       {mounted && (
-        <div className="fixed bottom-6 right-6 z-[100] flex flex-col gap-3 w-full max-w-sm pointer-events-none">
+        <div className="fixed bottom-6 right-6 z-[100] flex flex-col gap-3 w-auto max-w-xs pointer-events-none">
           <AnimatePresence mode="popLayout">
             {toasts.map((item) => (
-              <ToastComponent key={item.id} item={item} onRemove={removeToast} />
+              <ToastComponent
+                key={item.id}
+                item={item}
+                onRemove={removeToast}
+              />
             ))}
           </AnimatePresence>
         </div>
@@ -107,25 +121,27 @@ function ToastComponent({
       exit={{ opacity: 0, scale: 0.9, x: 10, transition: { duration: 0.15 } }}
       transition={{ type: "spring", stiffness: 350, damping: 25 }}
       className={clsx(
-        "pointer-events-auto flex items-start gap-3 p-4 rounded-2xl bg-neutral-900/90 backdrop-blur-md border text-white/90 shadow-2xl relative overflow-hidden group select-none",
-        borders[type]
+        "pointer-events-auto flex items-start gap-3 p-4 rounded-2xl bg-neutral-900/90 backdrop-blur-md border text-white/90 relative",
+        borders[type],
       )}
     >
       {/* Dynamic Glowing Accent Background */}
       <div
         className={clsx(
-          "absolute inset-0 opacity-5 transition-opacity group-hover:opacity-10 pointer-events-none duration-300",
+          "absolute inset-0 opacity-5  pointer-events-none duration-300",
           {
             "bg-emerald-500": type === "success",
             "bg-rose-500": type === "error",
             "bg-amber-500": type === "warning",
-          }
+          },
         )}
       />
 
-      <div className="flex items-center justify-center pt-0.5">{icons[type]}</div>
+      <div className="flex items-center justify-center pt-0.5">
+        {icons[type]}
+      </div>
 
-      <div className="flex-1 text-sm font-medium leading-relaxed pr-6">{message}</div>
+      <div className="text-sm font-medium leading-relaxed">{message}</div>
 
       <button
         onClick={() => onRemove(id)}

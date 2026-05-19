@@ -38,7 +38,7 @@ export default function GalleryContent() {
 
   const user = useQuery(api.users.current);
   const photos = useQuery(api.photos.getPhotos, { eventId });
-  const event = useQuery(api.events.getEventBySlug, { slug: eventId });
+  const event = useQuery(api.events.getEventById, { id: eventId });
   const deletePhotoMutation = useMutation(api.photos.deletePhoto);
   const deleteFromCloudinary = useAction(api.cloudinary.deleteFromCloudinary);
   const joinMutation = useMutation(api.events.joinEvent);
@@ -156,20 +156,20 @@ export default function GalleryContent() {
 
       {/* Action Bar */}
       <section className="px-6 pb-10 flex items-center gap-3 z-10">
-        <button 
+        <button
           onClick={() => {
-            toast.warning("Téléchargement groupé disponible très bientôt ! Pour l'instant, cliquez sur une photo pour l'agrandir et l'enregistrer.");
+            toast.warning("Téléchargement groupé disponible très bientôt !");
           }}
           className="flex-1 h-12 flex items-center justify-center gap-2 rounded-xl bg-white/5 border border-white/5 text-[11px] font-bold uppercase tracking-widest transition-colors hover:bg-white/10 active:scale-95 cursor-pointer"
         >
           <Download className="w-4 h-4" />
         </button>
-        <button 
+        <button
           onClick={async () => {
             try {
-              const url = `${window.location.origin}/event/${eventId}`;
+              const url = `${window.location.origin}/event/${eventId}/gallery`;
               await navigator.clipboard.writeText(url);
-              toast.success("Lien d'invitation copié ! Partagez-le avec vos amis. 🔗");
+              toast.success("Lien d'invitation copié 🔗");
             } catch (err) {
               toast.error("Impossible de copier le lien.");
             }
@@ -309,8 +309,8 @@ export default function GalleryContent() {
               inattendus.
             </p>
             <p className="pt-2 border-t border-white/10">
-              Vos retours sont précieux ! N&apos;hésitez pas à me contacter si vous
-              rencontrez des problèmes ou si vous avez des suggestions :
+              Vos retours sont précieux ! N&apos;hésitez pas à me contacter si
+              vous rencontrez des problèmes ou si vous avez des suggestions :
             </p>
 
             <div className="flex flex-col gap-3 pt-2">

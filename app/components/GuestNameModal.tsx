@@ -12,7 +12,7 @@ interface GuestNameModalProps {
 }
 
 export function GuestNameModal({ eventId, guestId }: GuestNameModalProps) {
-  const event = useQuery(api.events.getEventBySlug, { slug: eventId });
+  const event = useQuery(api.events.getEventById, { id: eventId });
   const participant = useQuery(api.events.getParticipant, { eventId, guestId });
   const updateNameMutation = useMutation(api.events.updateParticipantName);
   const [name, setName] = useState("");

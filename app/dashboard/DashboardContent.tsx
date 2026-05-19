@@ -126,7 +126,7 @@ export default function DashboardContent() {
                             <button
                               key={event._id}
                               onClick={() =>
-                                router.push(`/event/${event.slug}/gallery`)
+                                router.push(`/event/${event._id}/gallery`)
                               }
                               className="relative min-w-[200px] w-[200px] h-[280px] rounded-3xl overflow-hidden snap-center flex-shrink-0 text-left group border border-white/5"
                             >
@@ -188,7 +188,7 @@ export default function DashboardContent() {
                             <button
                               key={event._id}
                               onClick={() =>
-                                router.push(`/event/${event.slug}/gallery`)
+                                router.push(`/event/${event._id}/gallery`)
                               }
                               className="group text-left w-full"
                             >

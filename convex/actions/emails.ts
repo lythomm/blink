@@ -54,7 +54,7 @@ export const sendWelcomeKitEmail = action({
     email: v.string(),
     userName: v.string(),
     eventName: v.string(),
-    eventSlug: v.string(),
+    eventId: v.string(),
   },
   handler: async (ctx, args) => {
     const resendApiKey = process.env.RESEND_API_KEY;
@@ -83,13 +83,13 @@ export const sendWelcomeKitEmail = action({
             
             <div style="margin: 30px 0; padding: 20px; background-color: #111111; border: 1px solid #374151; border-radius: 8px; text-align: center;">
               <p style="font-size: 14px; color: #B3B3B3; margin-bottom: 10px;">Lien direct de l'événement :</p>
-              <a href="https://blink-photo.fr/join/${args.eventSlug}" style="display: inline-block; padding: 12px 24px; background-color: #FFFFFF; color: #0D0D0D; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
+              <a href="https://blink-photo.fr/event/${args.eventId}/gallery" style="display: inline-block; padding: 12px 24px; background-color: #FFFFFF; color: #0D0D0D; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
                 Rejoindre l'événement
               </a>
             </div>
 
             <p style="font-size: 14px; color: #B3B3B3; line-height: 1.5;">
-              Code de l'événement à partager : <strong style="color: #FFFFFF; font-size: 18px;">${args.eventSlug.toUpperCase()}</strong>
+              Identifiant de l'événement à partager : <strong style="color: #FFFFFF; font-size: 18px;">${args.eventId}</strong>
             </p>
             <p style="font-size: 12px; color: #6B7280; margin-top: 30px; border-top: 1px solid #374151; padding-top: 20px;">
               Merci d'utiliser Blink, l'expérience photo skeuomorphique et argentique unique.

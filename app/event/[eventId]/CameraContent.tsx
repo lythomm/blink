@@ -55,7 +55,7 @@ export default function CameraContent() {
     guestId,
   });
   const photos = useQuery(api.photos.getPhotos, { eventId });
-  const event = useQuery(api.events.getEventBySlug, { slug: eventId });
+  const event = useQuery(api.events.getEventById, { id: eventId });
 
   const lastPhotos = photos?.slice(0, 3) || [];
 
@@ -73,7 +73,9 @@ export default function CameraContent() {
     };
     const handleOffline = () => {
       setIsOnline(false);
-      toast.warning("Mode hors-ligne activé. Vos clichés seront sauvegardés sur votre appareil.");
+      toast.warning(
+        "Mode hors-ligne activé. Vos clichés seront sauvegardés sur votre appareil.",
+      );
     };
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
@@ -200,12 +202,7 @@ export default function CameraContent() {
   };
 
   const capture = async () => {
-    if (
-      !videoRef.current ||
-      !canvasRef.current ||
-      isProcessing ||
-      isUploading
-    )
+    if (!videoRef.current || !canvasRef.current || isProcessing || isUploading)
       return;
 
     if (remainingPoses === 0) {
@@ -324,7 +321,6 @@ export default function CameraContent() {
         guestId,
         cloudinaryId: cloudinaryData.public_id,
       });
-      toast.success("Cliché capturé avec succès ! 📸");
     } catch (err) {
       console.error("Upload failed, saving locally:", err);
       await savePendingPhoto(blob, eventId, guestId);
@@ -577,12 +573,12 @@ export default function CameraContent() {
               <div className="relative w-full h-full">
                 {lastPhotos.map((photo, i) => (
                   <div
-                     key={photo._id}
-                     className="absolute inset-0 rounded-lg overflow-hidden border border-white/20 shadow-2xl bg-neutral-800 transition-all duration-500 origin-bottom"
-                     style={{
-                       transform: `rotate(${(i - (lastPhotos.length - 1) / 2) * 10}deg) translateX(${(i - (lastPhotos.length - 1) / 2) * 20}px) translateY(${Math.abs(i - (lastPhotos.length - 1) / 2) * 4}px)`,
-                       zIndex: 10 - i,
-                     }}
+                    key={photo._id}
+                    className="absolute inset-0 rounded-lg overflow-hidden border border-white/20 shadow-2xl bg-neutral-800 transition-all duration-500 origin-bottom"
+                    style={{
+                      transform: `rotate(${(i - (lastPhotos.length - 1) / 2) * 10}deg) translateX(${(i - (lastPhotos.length - 1) / 2) * 20}px) translateY(${Math.abs(i - (lastPhotos.length - 1) / 2) * 4}px)`,
+                      zIndex: 10 - i,
+                    }}
                   >
                     <img
                       src={`https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/c_fill,h_100,w_100/${photo.cloudinaryId}`}
