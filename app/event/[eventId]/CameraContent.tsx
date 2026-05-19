@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -27,7 +27,17 @@ import { GuestNameModal } from "@/app/components/GuestNameModal";
 import { useToast } from "@/app/components/Toast";
 import { CldImage } from "next-cloudinary";
 
-const PHOTO_EFFECTS = [{ art: "zorro" }, { noise: "20" }];
+const PHOTO_EFFECTS = [{ art: "primavera" }, { noise: "20" }];
+
+interface NavigatorWithWakeLock extends Navigator {
+  wakeLock?: {
+    request(type: "screen"): Promise<unknown>;
+  };
+}
+
+interface TorchConstraintSet extends MediaTrackConstraintSet {
+  torch?: boolean;
+}
 
 export default function CameraContent() {
   const { eventId } = useParams() as { eventId: string };
@@ -43,8 +53,7 @@ export default function CameraContent() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [isOnline, setIsOnline] = useState(true);
-  const [pendingCount, setPendingCount] = useState(0);
+  const [isOnline, setIsOnline] = useState(() => typeof window !== "undefined" ? navigator.onLine : true);
   const [flashEnabled, setFlashEnabled] = useState(true);
   const [facingMode, setFacingMode] = useState<"user" | "environment">(
     "environment",
@@ -62,90 +71,19 @@ export default function CameraContent() {
 
   const lastPhotos = photos?.slice(0, 3) || [];
 
-  useEffect(() => {
-    const updatePendingCount = async () => {
-      const pending = await getPendingPhotos();
-      setPendingCount(pending.length);
-    };
-    updatePendingCount();
-
-    setIsOnline(navigator.onLine);
-    const handleOnline = () => {
-      setIsOnline(true);
-      toast.success("Connexion rétablie ! Vos photos vont être synchronisées.");
-    };
-    const handleOffline = () => {
-      setIsOnline(false);
-      toast.warning(
-        "Mode hors-ligne activé. Vos clichés seront sauvegardés sur votre appareil.",
-      );
-    };
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (eventId && guestId) {
-      joinMutation({ eventId, guestId });
-    }
-  }, [eventId, guestId]);
-
-  useEffect(() => {
-    if (isOnline) {
-      syncOfflinePhotos();
-    }
-  }, [isOnline]);
-
-  useEffect(() => {
-    startCamera(facingMode);
-    setupWakeLock();
-    return () => {
-      stopActiveStream();
-    };
-  }, [facingMode]);
-
-  useEffect(() => {
-    if (!event?.endsAt) return;
-
-    const updateTimer = () => {
-      const now = Date.now();
-      const diff = event.endsAt - now;
-
-      if (diff <= 0) {
-        setTimeLeft("Expiré");
-        return;
-      }
-
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
-      if (hours > 0) {
-        setTimeLeft(`${hours}h ${minutes}m restants`);
-      } else {
-        setTimeLeft(`${minutes}m restants`);
-      }
-    };
-
-    updateTimer();
-    const interval = setInterval(updateTimer, 60000); // Update every minute
-    return () => clearInterval(interval);
-  }, [event?.endsAt]);
-
-  const setupWakeLock = async () => {
-    if ("wakeLock" in navigator) {
+  // Functions (with useCallback to avoid re-renders and satisfy react-hooks/exhaustive-deps)
+  const setupWakeLock = useCallback(async () => {
+    const nav = navigator as NavigatorWithWakeLock;
+    if (nav.wakeLock) {
       try {
-        await (navigator as any).wakeLock.request("screen");
+        await nav.wakeLock.request("screen");
       } catch (err) {
         console.error("Wake Lock failed:", err);
       }
     }
-  };
+  }, []);
 
-  const stopActiveStream = () => {
+  const stopActiveStream = useCallback(() => {
     if (activeStreamRef.current) {
       activeStreamRef.current.getTracks().forEach((track) => track.stop());
       activeStreamRef.current = null;
@@ -153,9 +91,13 @@ export default function CameraContent() {
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
-    setStream(null);
-  };
-  const startCamera = async (mode = facingMode) => {
+    // Defer state update to avoid synchronous cascading renders inside useEffect
+    setTimeout(() => {
+      setStream(null);
+    }, 0);
+  }, []);
+
+  const startCamera = useCallback(async (mode = facingMode) => {
     if (typeof window === "undefined" || !navigator.mediaDevices) return;
 
     const requestId = ++activeRequestIdRef.current;
@@ -197,103 +139,9 @@ export default function CameraContent() {
         console.error("Camera access failed:", err);
       }
     }
-  };
+  }, [facingMode, stopActiveStream]);
 
-  const toggleCamera = () => {
-    const newMode = facingMode === "user" ? "environment" : "user";
-    setFacingMode(newMode);
-  };
-
-  const capture = async () => {
-    if (!videoRef.current || !canvasRef.current || isProcessing || isUploading)
-      return;
-
-    if (remainingPoses === 0) {
-      toast.error("Votre pellicule est pleine ! Plus de poses disponibles.");
-      return;
-    }
-
-    setIsProcessing(true);
-    setIsCapturing(true);
-
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    const context = canvas.getContext("2d");
-    const track = stream?.getVideoTracks()[0];
-
-    // End flash white visual overlay quickly for snappy feel
-    setTimeout(() => setIsCapturing(false), 150);
-
-    // If flash is enabled and we are on back camera, physically turn on the torch first
-    if (flashEnabled && facingMode === "environment" && track) {
-      try {
-        await track.applyConstraints({ advanced: [{ torch: true } as any] });
-        // Small delay to let the flashlight fire and illuminate the scene before capturing
-        await new Promise((resolve) => setTimeout(resolve, 250));
-      } catch (e) {
-        console.log("Failed to turn on physical flash:", e);
-      }
-    }
-
-    if (context) {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-
-      // Draw the raw camera frame directly
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-      // Turn off physical torch immediately after capturing the canvas frame
-      if (flashEnabled && facingMode === "environment" && track) {
-        try {
-          await track.applyConstraints({ advanced: [{ torch: false } as any] });
-        } catch (e) {
-          console.log("Failed to turn off physical flash:", e);
-        }
-      }
-
-      canvas.toBlob(
-        async (blob) => {
-          if (blob) {
-            handleUpload(blob);
-          }
-        },
-        "image/webp",
-        0.8,
-      );
-    } else {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleUpload = async (blob: Blob) => {
-    setIsUploading(true);
-    if (!navigator.onLine) {
-      await savePendingPhoto(blob, eventId, guestId);
-      setPendingCount((prev) => prev + 1);
-      setIsUploading(false);
-      toast.warning("Photo sauvegardée localement (hors-ligne)");
-      return;
-    }
-
-    try {
-      const cloudinaryData = await uploadToCloudinary(blob, eventId);
-      await takePhotoMutation({
-        eventId,
-        guestId,
-        cloudinaryId: cloudinaryData.public_id,
-      });
-    } catch (err) {
-      console.error("Upload failed, saving locally:", err);
-      await savePendingPhoto(blob, eventId, guestId);
-      setPendingCount((prev) => prev + 1);
-      toast.warning("Envoi échoué, cliché sauvegardé localement");
-    } finally {
-      setIsUploading(false);
-      setIsProcessing(false);
-    }
-  };
-
-  const uploadToCloudinary = async (blob: Blob, eId: string) => {
+  const uploadToCloudinary = useCallback(async (blob: Blob, eId: string) => {
     const timestamp = Math.round(new Date().getTime() / 1000);
     const folder = `blink/${eId}`;
     const paramsToSign = { timestamp, folder };
@@ -320,9 +168,9 @@ export default function CameraContent() {
     );
 
     return uploadResponse.json();
-  };
+  }, []);
 
-  const syncOfflinePhotos = async () => {
+  const syncOfflinePhotos = useCallback(async () => {
     const pending = await getPendingPhotos();
     if (pending.length === 0) return;
 
@@ -340,7 +188,6 @@ export default function CameraContent() {
         });
         await removePendingPhoto(photo.id);
         syncedCount++;
-        setPendingCount((prev) => Math.max(0, prev - 1));
       } catch (err) {
         console.error("Sync failed for photo", photo.id, err);
       }
@@ -348,7 +195,167 @@ export default function CameraContent() {
     if (syncedCount > 0) {
       toast.success(`${syncedCount} photo(s) synchronisée(s) avec succès ! ✨`);
     }
-  };
+  }, [takePhotoMutation, toast, uploadToCloudinary]);
+
+  const handleUpload = useCallback(async (blob: Blob) => {
+    setIsUploading(true);
+    if (!navigator.onLine) {
+      await savePendingPhoto(blob, eventId, guestId);
+      setIsUploading(false);
+      toast.warning("Photo sauvegardée localement (hors-ligne)");
+      return;
+    }
+
+    try {
+      const cloudinaryData = await uploadToCloudinary(blob, eventId);
+      await takePhotoMutation({
+        eventId,
+        guestId,
+        cloudinaryId: cloudinaryData.public_id,
+      });
+    } catch (err) {
+      console.error("Upload failed, saving locally:", err);
+      await savePendingPhoto(blob, eventId, guestId);
+      toast.warning("Envoi échoué, cliché sauvegardé localement");
+    } finally {
+      setIsUploading(false);
+      setIsProcessing(false);
+    }
+  }, [eventId, guestId, takePhotoMutation, toast, uploadToCloudinary]);
+
+  const capture = useCallback(async () => {
+    if (!videoRef.current || !canvasRef.current || isProcessing || isUploading)
+      return;
+
+    if (remainingPoses === 0) {
+      toast.error("Votre pellicule est pleine ! Plus de poses disponibles.");
+      return;
+    }
+
+    setIsProcessing(true);
+    setIsCapturing(true);
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
+    const track = stream?.getVideoTracks()[0];
+
+    // End flash white visual overlay quickly for snappy feel
+    setTimeout(() => setIsCapturing(false), 150);
+
+    // If flash is enabled and we are on back camera, physically turn on the torch first
+    if (flashEnabled && facingMode === "environment" && track) {
+      try {
+        await track.applyConstraints({ advanced: [{ torch: true } as TorchConstraintSet] });
+        // Small delay to let the flashlight fire and illuminate the scene before capturing
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      } catch (e) {
+        console.log("Failed to turn on physical flash:", e);
+      }
+    }
+
+    if (context) {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      // Draw the raw camera frame directly
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Turn off physical torch immediately after capturing the canvas frame
+      if (flashEnabled && facingMode === "environment" && track) {
+        try {
+          await track.applyConstraints({ advanced: [{ torch: false } as TorchConstraintSet] });
+        } catch (e) {
+          console.log("Failed to turn off physical flash:", e);
+        }
+      }
+
+      canvas.toBlob(
+        async (blob) => {
+          if (blob) {
+            handleUpload(blob);
+          }
+        },
+        "image/webp",
+        0.8,
+      );
+    } else {
+      setIsProcessing(false);
+    }
+  }, [facingMode, flashEnabled, handleUpload, isProcessing, isUploading, remainingPoses, stream, toast]);
+
+  const toggleCamera = useCallback(() => {
+    const newMode = facingMode === "user" ? "environment" : "user";
+    setFacingMode(newMode);
+  }, [facingMode]);
+
+  // Effects
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      toast.success("Connexion rétablie ! Vos photos vont être synchronisées.");
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      toast.warning(
+        "Mode hors-ligne activé. Vos clichés seront sauvegardés sur votre appareil.",
+      );
+    };
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [toast]);
+
+  useEffect(() => {
+    if (eventId && guestId) {
+      joinMutation({ eventId, guestId });
+    }
+  }, [eventId, guestId, joinMutation]);
+
+  useEffect(() => {
+    if (isOnline) {
+      syncOfflinePhotos();
+    }
+  }, [isOnline, syncOfflinePhotos]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    startCamera(facingMode);
+    setupWakeLock();
+    return () => {
+      stopActiveStream();
+    };
+  }, [facingMode, startCamera, setupWakeLock, stopActiveStream]);
+
+  useEffect(() => {
+    if (!event?.endsAt) return;
+
+    const updateTimer = () => {
+      const now = Date.now();
+      const diff = event.endsAt - now;
+
+      if (diff <= 0) {
+        setTimeLeft("Expiré");
+        return;
+      }
+
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+      if (hours > 0) {
+        setTimeLeft(`${hours}h ${minutes}m restants`);
+      } else {
+        setTimeLeft(`${minutes}m restants`);
+      }
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 60000); // Update every minute
+    return () => clearInterval(interval);
+  }, [event?.endsAt]);
 
   return (
     <main className="fixed inset-0 bg-black flex flex-col overflow-hidden text-white font-sans">
