@@ -42,10 +42,9 @@ export default function GalleryContent() {
   const { isAuthenticated } = useConvexAuth();
 
   const user = useQuery(api.users.current);
-  const photos = useQuery(api.photos.getPhotos, { eventId });
+  const photos = useQuery(api.photos.getPhotos, { eventId, clientGuestId: guestId });
   const event = useQuery(api.events.getEventById, { id: eventId });
-  const deletePhotoMutation = useMutation(api.photos.deletePhoto);
-  const deleteFromCloudinary = useAction(api.cloudinary.deleteFromCloudinary);
+  const deletePhotoSecureAction = useAction(api.cloudinary.deletePhotoSecure);
   const joinMutation = useMutation(api.events.joinEvent);
   const participantCount = useQuery(api.events.getParticipantCount, {
     eventId,
@@ -68,12 +67,11 @@ export default function GalleryContent() {
     }
   }, [eventId]);
 
-  const handleDelete = async (photoId: Id<"photos">, cloudinaryId: string) => {
+  const handleDelete = async (photoId: Id<"photos">) => {
     if (!confirm("Effacer ce souvenir définitivement ?")) return;
     setDeletingId(photoId);
     try {
-      await deletePhotoMutation({ id: photoId, guestId });
-      await deleteFromCloudinary({ cloudinaryId });
+      await deletePhotoSecureAction({ photoId, guestId });
       toast.success("Souvenir supprimé avec succès ! 🗑️");
     } catch (err) {
       console.error("Delete failed:", err);
@@ -234,17 +232,17 @@ export default function GalleryContent() {
                 {/* Guest Label */}
                 <div className="absolute top-2 left-2">
                   <span className="text-[10px] font-medium text-white bg-black/10 px-2.5 py-1 rounded-full border border-white/10">
-                    {photo.guestId === guestId ? "Moi" : photo.authorName}
+                    {photo.isOwnPhoto ? "Moi" : photo.authorName}
                   </span>
                 </div>
 
                 {/* Actions Overlay */}
-                {/* {photo.guestId === guestId && (
+                {/* {photo.isOwnPhoto && (
                   <div className="absolute bottom-2 right-2">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDelete(photo._id, photo.cloudinaryId);
+                        handleDelete(photo._id);
                       }}
                       disabled={deletingId === photo._id}
                       className="p-2 bg-black/50 backdrop-blur-xl rounded-full transition-colors pointer-events-auto cursor-pointer"

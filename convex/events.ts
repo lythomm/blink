@@ -48,6 +48,12 @@ export const createEvent = mutation({
 export const joinEvent = mutation({
   args: { eventId: v.string(), guestId: v.string() },
   handler: async (ctx, args) => {
+    const eventIdNormalized = ctx.db.normalizeId("events", args.eventId);
+    const event = eventIdNormalized ? await ctx.db.get(eventIdNormalized) : null;
+    if (!event) {
+      throw new Error("Événement introuvable.");
+    }
+
     const existing = await ctx.db
       .query("participants")
       .withIndex("by_event_and_guest", (q) =>
@@ -115,6 +121,12 @@ export const listUserEvents = query({
 export const updateParticipantName = mutation({
   args: { eventId: v.string(), guestId: v.string(), name: v.string() },
   handler: async (ctx, args) => {
+    const eventIdNormalized = ctx.db.normalizeId("events", args.eventId);
+    const event = eventIdNormalized ? await ctx.db.get(eventIdNormalized) : null;
+    if (!event) {
+      throw new Error("Événement introuvable.");
+    }
+
     const existing = await ctx.db
       .query("participants")
       .withIndex("by_event_and_guest", (q) =>
