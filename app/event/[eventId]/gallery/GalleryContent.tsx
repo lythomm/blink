@@ -4,7 +4,10 @@ import { useParams, useRouter } from "next/navigation";
 import { useAction, useMutation, useQuery, useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { getGuestId } from "@/app/lib/utils";
-import Image from "next/image";
+import { CldImage, getCldImageUrl } from "next-cloudinary";
+
+const PHOTO_EFFECTS = [{ art: "primavera" }, { noise: "20" }];
+
 import {
   ArrowLeft,
   Settings,
@@ -211,13 +214,23 @@ export default function GalleryContent() {
                 className="relative aspect-[3/4] rounded-2xl overflow-hidden group shadow-2xl border border-white/5 cursor-zoom-in"
                 onClick={() => setIndex(idx)}
               >
-                <Image
-                  src={`https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/${photo.cloudinaryId}`}
+                <CldImage
+                  src={photo.cloudinaryId}
+                  deliveryType="upload"
                   alt="Captured moment"
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 50vw, 33vw"
                   priority={idx < 4}
+                  effects={PHOTO_EFFECTS}
+                  data-debug-url={getCldImageUrl({
+                    src: photo.cloudinaryId,
+                    deliveryType: "upload",
+                    width: 600,
+                    height: 800,
+                    crop: "fill",
+                    effects: PHOTO_EFFECTS,
+                  })}
                 />
 
                 {/* Guest Label */}
@@ -277,7 +290,14 @@ export default function GalleryContent() {
         close={() => setIndex(-1)}
         carousel={{ padding: 0, imageFit: "contain" }}
         slides={photos?.map((photo) => ({
-          src: `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/${photo.cloudinaryId}`,
+          src: getCldImageUrl({
+            src: photo.cloudinaryId,
+            deliveryType: "upload",
+            width: 1200,
+            height: 1600,
+            crop: "fill",
+            effects: PHOTO_EFFECTS,
+          }),
         }))}
       />
 

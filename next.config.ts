@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  allowedDevOrigins: ["7b31-212-194-150-114.ngrok-free.app"],
+  allowedDevOrigins: ["e0aa-212-194-150-114.ngrok-free.app"],
   images: {
     loader: "custom",
     loaderFile: "./app/lib/cloudinary-loader.ts",

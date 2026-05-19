@@ -25,6 +25,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 import { GuestNameModal } from "@/app/components/GuestNameModal";
 import { useToast } from "@/app/components/Toast";
+import { CldImage } from "next-cloudinary";
+
+const PHOTO_EFFECTS = [{ art: "zorro" }, { noise: "20" }];
 
 export default function CameraContent() {
   const { eventId } = useParams() as { eventId: string };
@@ -236,50 +239,8 @@ export default function CameraContent() {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
 
-      // 1. Filtre argentique : Fort contraste, saturation réduite, ton légèrement chaud
-      context.filter =
-        "contrast(1.35) saturate(0.75) sepia(0.15) brightness(1.15)";
+      // Draw the raw camera frame directly
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
-      context.filter = "none";
-
-      // 2. Effet de Flash (centre légèrement surexposé)
-      const flashGradient = context.createRadialGradient(
-        canvas.width / 2,
-        canvas.height * 0.4,
-        0,
-        canvas.width / 2,
-        canvas.height * 0.4,
-        canvas.height * 0.4,
-      );
-      flashGradient.addColorStop(0, "rgba(255,255,255,0.15)");
-      flashGradient.addColorStop(1, "rgba(255,255,255,0)");
-      context.fillStyle = flashGradient;
-      context.fillRect(0, 0, canvas.width, canvas.height);
-
-      // 3. Vignettage (bords sombres et légèrement verdâtres typiques des jetables)
-      const vignette = context.createRadialGradient(
-        canvas.width / 2,
-        canvas.height / 2,
-        canvas.height * 0.3,
-        canvas.width / 2,
-        canvas.height / 2,
-        canvas.height * 0.8,
-      );
-      vignette.addColorStop(0, "rgba(0,0,0,0)");
-      vignette.addColorStop(1, "rgba(0,20,10,0.6)");
-      context.fillStyle = vignette;
-      context.fillRect(0, 0, canvas.width, canvas.height);
-
-      // 4. Grain de pellicule plus dense (bruit noir et blanc)
-      for (let i = 0; i < 8000; i++) {
-        const x = Math.random() * canvas.width;
-        const y = Math.random() * canvas.height;
-        const isDark = Math.random() > 0.5;
-        context.fillStyle = isDark
-          ? "rgba(0,0,0,0.08)"
-          : "rgba(255,255,255,0.06)";
-        context.fillRect(x, y, 2, 2);
-      }
 
       // Turn off physical torch immediately after capturing the canvas frame
       if (flashEnabled && facingMode === "environment" && track) {
@@ -580,10 +541,15 @@ export default function CameraContent() {
                       zIndex: 10 - i,
                     }}
                   >
-                    <img
-                      src={`https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/c_fill,h_100,w_100/${photo.cloudinaryId}`}
+                    <CldImage
+                      src={photo.cloudinaryId}
+                      deliveryType="upload"
+                      width={100}
+                      height={100}
+                      crop="fill"
+                      effects={PHOTO_EFFECTS}
                       alt="Preview"
-                      className="w-full h-full object-cover grayscale-[0.2]"
+                      className="w-full h-full object-cover"
                     />
                   </div>
                 ))}
