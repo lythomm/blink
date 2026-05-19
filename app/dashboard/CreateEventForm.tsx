@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 import { getGuestId, prettyDisplayDate } from "@/app/lib/utils";
 import { useToast } from "@/app/components/Toast";
+import { QRCodeImage } from "@/app/components/QRCodeImage";
 
 interface CreateEventFormProps {
   createStep: number;
@@ -34,11 +35,20 @@ export default function CreateEventForm({
   const [endDateTime, setEndDateTime] = useState("");
   const [maxPhotos, setMaxPhotos] = useState(5);
   const [createdEventId, setCreatedEventId] = useState("");
+  const [shareUrl, setShareUrl] = useState("");
+  const [qrDataUrl, setQrDataUrl] = useState("");
 
   // Clear error when inputs change
   useEffect(() => {
     setError("");
   }, [name, endDateTime]);
+
+  // Compute share URL on client side
+  useEffect(() => {
+    if (createdEventId && typeof window !== "undefined") {
+      setShareUrl(`${window.location.origin}/event/${createdEventId}/gallery`);
+    }
+  }, [createdEventId]);
 
   const createMutation = useMutation(api.events.createEvent);
   const joinMutation = useMutation(api.events.joinEvent);
@@ -246,12 +256,15 @@ export default function CreateEventForm({
 
               <div className="relative group">
                 <div className="absolute -inset-4 bg-white/5 rounded-2xl blur-xl transition-opacity" />
-                <div className="relative bg-white p-4 rounded-xl shadow-2xl">
-                  <img
-                    src="/mock_qr_code_blink_1778950106803.png"
-                    alt="QR Code"
-                    className="w-40 h-40 md:w-48 md:h-48 object-contain"
-                  />
+                <div className="relative bg-white p-4 rounded-xl shadow-2xl flex items-center justify-center overflow-hidden">
+                  {shareUrl && (
+                    <QRCodeImage
+                      text={shareUrl}
+                      size={192}
+                      className="w-40 h-40 md:w-48 md:h-48 object-contain rounded-lg"
+                      onGenerate={setQrDataUrl}
+                    />
+                  )}
                 </div>
               </div>
 
@@ -259,10 +272,10 @@ export default function CreateEventForm({
                 <button
                   type="button"
                   onClick={() => {
-                    navigator.clipboard.writeText(
-                      `${window.location.origin}/event/${createdEventId}/gallery`,
-                    );
-                    toast.success("Lien copié");
+                    if (shareUrl) {
+                      navigator.clipboard.writeText(shareUrl);
+                      toast.success("Lien copié");
+                    }
                   }}
                   className="flex items-center justify-center gap-2 py-3 px-4 bg-white/5 border border-white/10 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-colors"
                 >
@@ -270,7 +283,19 @@ export default function CreateEventForm({
                 </button>
                 <button
                   type="button"
-                  onClick={() => toast.success("QR Code enregistré")}
+                  onClick={() => {
+                    if (qrDataUrl) {
+                      const link = document.createElement("a");
+                      link.href = qrDataUrl;
+                      link.download = `qr-code-${name.replace(/\s+/g, "-").toLowerCase()}.png`;
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                      toast.success("QR Code enregistré");
+                    } else {
+                      toast.error("QR Code non disponible");
+                    }
+                  }}
                   className="flex items-center justify-center gap-2 py-3 px-4 bg-white/5 border border-white/10 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-colors"
                 >
                   Enregistrer QR

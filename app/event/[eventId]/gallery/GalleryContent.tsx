@@ -32,6 +32,7 @@ import "yet-another-react-lightbox/styles.css";
 import { GuestNameModal } from "@/app/components/GuestNameModal";
 import { useToast } from "@/app/components/Toast";
 import { PWAInstallBanner } from "@/app/components/PWAInstallBanner";
+import { QRCodeImage } from "@/app/components/QRCodeImage";
 
 export default function GalleryContent() {
   const { eventId } = useParams() as { eventId: string };
@@ -56,7 +57,16 @@ export default function GalleryContent() {
   const [timeLeft, setTimeLeft] = useState<string>("");
   const [index, setIndex] = useState(-1);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
+  const [qrDataUrl, setQrDataUrl] = useState("");
   const [hasCloudinaryError, setHasCloudinaryError] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setShareUrl(`${window.location.origin}/event/${eventId}/gallery`);
+    }
+  }, [eventId]);
 
   const handleDelete = async (photoId: Id<"photos">, cloudinaryId: string) => {
     if (!confirm("Effacer ce souvenir définitivement ?")) return;
@@ -170,16 +180,9 @@ export default function GalleryContent() {
           <Download className="w-4 h-4" />
         </button>
         <button
-          onClick={async () => {
-            try {
-              const url = `${window.location.origin}/event/${eventId}/gallery`;
-              await navigator.clipboard.writeText(url);
-              toast.success("Lien d'invitation copié 🔗");
-            } catch {
-              toast.error("Impossible de copier le lien.");
-            }
-          }}
+          onClick={() => setIsShareOpen(true)}
           className="flex-1 h-12 flex items-center justify-center gap-2 rounded-xl bg-white/5 border border-white/5 text-[11px] font-bold uppercase tracking-widest transition-colors hover:bg-white/10 active:scale-95 cursor-pointer"
+          title="Partager l'événement"
         >
           <UserPlus className="w-4 h-4" />
         </button>
@@ -347,6 +350,64 @@ export default function GalleryContent() {
                 <span className="font-medium">lythomm@gmail.com</span>
               </a>
             </div>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Share Modal */}
+      <Modal isOpen={isShareOpen} onClose={() => setIsShareOpen(false)}>
+        <div className="space-y-6 flex flex-col items-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-display text-white">Inviter des amis</h2>
+            <p className="text-xs text-white/40 mt-1">
+              Partagez ce QR Code pour qu'ils rejoignent l'album "{event?.name || ""}"
+            </p>
+          </div>
+
+          <div className="relative group">
+            <div className="absolute -inset-4 bg-white/5 rounded-2xl blur-xl transition-opacity" />
+            <div className="relative bg-white p-4 rounded-xl shadow-2xl flex items-center justify-center overflow-hidden">
+              {shareUrl && (
+                <QRCodeImage
+                  text={shareUrl}
+                  size={200}
+                  className="w-44 h-44 object-contain rounded-lg"
+                  onGenerate={setQrDataUrl}
+                />
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3 w-full">
+            <button
+              onClick={() => {
+                if (shareUrl) {
+                  navigator.clipboard.writeText(shareUrl);
+                  toast.success("Lien d'invitation copié 🔗");
+                }
+              }}
+              className="w-full h-12 flex items-center justify-center gap-2 rounded-xl bg-white text-black text-[11px] font-bold uppercase tracking-widest transition-all hover:bg-white/90 active:scale-95 cursor-pointer shadow-[0_0_30px_rgba(255,255,255,0.05)]"
+            >
+              Copier le lien
+            </button>
+            <button
+              onClick={() => {
+                if (qrDataUrl) {
+                  const link = document.createElement("a");
+                  link.href = qrDataUrl;
+                  link.download = `qr-code-${event?.name ? event.name.replace(/\s+/g, "-").toLowerCase() : "event"}.png`;
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                  toast.success("QR Code téléchargé ! 📲");
+                } else {
+                  toast.error("QR Code non disponible");
+                }
+              }}
+              className="w-full h-12 flex items-center justify-center gap-2 rounded-xl bg-white/5 border border-white/10 text-[11px] font-bold uppercase tracking-widest transition-colors hover:bg-white/10 active:scale-95 cursor-pointer"
+            >
+              Télécharger le QR
+            </button>
           </div>
         </div>
       </Modal>
