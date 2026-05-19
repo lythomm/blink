@@ -29,6 +29,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
+import LightboxDownload from "yet-another-react-lightbox/plugins/download";
 import { GuestNameModal } from "@/app/components/GuestNameModal";
 import { useToast } from "@/app/components/Toast";
 import { PWAInstallBanner } from "@/app/components/PWAInstallBanner";
@@ -282,17 +283,27 @@ export default function GalleryContent() {
         index={index}
         open={index >= 0}
         close={() => setIndex(-1)}
+        plugins={[LightboxDownload]}
         carousel={{ padding: 0, imageFit: "contain" }}
-        slides={photos?.map((photo) => ({
-          src: getCldImageUrl({
+        slides={photos?.map((photo) => {
+          const viewUrl = getCldImageUrl({
             src: photo.cloudinaryId,
             deliveryType: "upload",
             width: 1200,
             height: 1600,
             crop: "fill",
             effects: hasCloudinaryError ? [] : PHOTO_EFFECTS,
-          }),
-        }))}
+          });
+          const downloadUrl = getCldImageUrl({
+            src: photo.cloudinaryId,
+            deliveryType: "upload",
+            flags: ["attachment"],
+          });
+          return {
+            src: viewUrl,
+            download: downloadUrl,
+          };
+        })}
       />
 
       {/* About Button */}
