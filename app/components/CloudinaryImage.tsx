@@ -3,7 +3,7 @@
 import { CldImage, getCldImageUrl } from "next-cloudinary";
 import { useState } from "react";
 
-export const PHOTO_EFFECTS = [{ art: "primavera" }, { noise: "15" }];
+export const PHOTO_EFFECTS = [{ art: "primavera" }, { sharpen: "100" }, { noise: "15" }];
 
 type CropMode =
   | "fill"

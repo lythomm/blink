@@ -287,7 +287,7 @@ export default function CameraContent() {
           }
         },
         "image/webp",
-        0.8,
+        0.95,
       );
     } else {
       setIsProcessing(false);
