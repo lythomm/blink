@@ -78,7 +78,7 @@ export const getParticipantCount = query({
       .query("participants")
       .withIndex("by_event", (q) => q.eq("eventId", args.eventId))
       .collect();
-    return participants.length;
+    return participants.filter((p) => p.name && p.name.trim() !== "").length;
   },
 });
 
@@ -110,7 +110,7 @@ export const listUserEvents = query({
         return {
           ...event,
           photoCount: photos.length,
-          participantCount: participants.length,
+          participantCount: participants.filter((p) => p.name && p.name.trim() !== "").length,
           previews: photos.slice(0, 4).map(p => p.cloudinaryId),
         };
       }),
