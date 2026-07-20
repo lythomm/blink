@@ -9,6 +9,7 @@ import {
   savePendingPhoto,
   getPendingPhotos,
   removePendingPhoto,
+  compressCanvasToBlob,
 } from "@/app/lib/utils";
 import {
   Image as ImageIcon,
@@ -280,15 +281,13 @@ export default function CameraContent() {
         }
       }
 
-      canvas.toBlob(
-        async (blob) => {
-          if (blob) {
-            handleUpload(blob);
-          }
-        },
-        "image/webp",
-        0.95,
-      );
+      try {
+        const compressedBlob = await compressCanvasToBlob(canvas);
+        handleUpload(compressedBlob);
+      } catch (err) {
+        console.error("Compression failed:", err);
+        setIsProcessing(false);
+      }
     } else {
       setIsProcessing(false);
     }

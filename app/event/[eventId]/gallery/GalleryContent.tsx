@@ -23,6 +23,7 @@ import {
   Loader2,
   Trash2,
   HelpCircle,
+  Lock,
 } from "lucide-react";
 import { Modal } from "@/app/components/Modal";
 import { motion, AnimatePresence } from "framer-motion";
@@ -55,6 +56,7 @@ export default function GalleryContent() {
 
   const [deletingId, setDeletingId] = useState<Id<"photos"> | null>(null);
   const [timeLeft, setTimeLeft] = useState<string>("");
+  const [isLocked, setIsLocked] = useState<boolean>(true);
   const [index, setIndex] = useState(-1);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
@@ -97,9 +99,11 @@ export default function GalleryContent() {
 
       if (diff <= 0) {
         setTimeLeft("Cloturé");
+        setIsLocked(false);
         return;
       }
 
+      setIsLocked(true);
       const hours = Math.floor(diff / (1000 * 60 * 60));
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
@@ -111,7 +115,7 @@ export default function GalleryContent() {
     };
 
     updateTimer();
-    const interval = setInterval(updateTimer, 60000);
+    const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
   }, [event?.endsAt]);
 
@@ -188,11 +192,10 @@ export default function GalleryContent() {
         <button
           onClick={() => router.push(`/event/${eventId}`)}
           disabled={timeLeft === "Cloturé"}
-          className={`flex-[1.5] h-12 flex items-center justify-center gap-2 rounded-xl bg-white text-black text-[11px] font-bold uppercase tracking-widest transition-all cursor-pointer ${
-            timeLeft === "Cloturé"
+          className={`flex-[1.5] h-12 flex items-center justify-center gap-2 rounded-xl bg-white text-black text-[11px] font-bold uppercase tracking-widest transition-all cursor-pointer ${timeLeft === "Cloturé"
               ? "opacity-50 cursor-not-allowed"
               : "active:scale-95 shadow-[0_0_30px_rgba(255,255,255,0.1)]"
-          }`}
+            }`}
         >
           <Camera className="w-4 h-4" />
           Caméra
@@ -215,23 +218,40 @@ export default function GalleryContent() {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: idx * 0.05, duration: 0.6 }}
-                className="relative aspect-[3/4] rounded-2xl overflow-hidden group shadow-2xl border border-white/5 cursor-zoom-in"
-                onClick={() => setIndex(idx)}
+                className={`relative aspect-[3/4] rounded-2xl overflow-hidden group shadow-2xl border border-white/5 ${isLocked ? "cursor-default" : "cursor-zoom-in"
+                  }`}
+                onClick={() => {
+                  if (isLocked) {
+                    const time = timeLeft ? timeLeft.replace(" restants", "") : "quelques instants";
+                    toast.warning(`Photos prêtes dans ${time} ! 🤫`);
+                    return;
+                  }
+                  setIndex(idx);
+                }}
               >
                 <CloudinaryImage
                   src={photo.cloudinaryId}
                   alt="Captured moment"
                   fill
                   aspectRatio="3:4"
-                  className="object-cover"
+                  className={`object-cover transition-all duration-500 ${isLocked ? "blur-md scale-110 pointer-events-none select-none" : "group-hover:scale-105"
+                    }`}
                   sizes="(max-width: 768px) 50vw, 33vw"
                   priority={idx < 4}
                   effects={hasCloudinaryError ? [] : PHOTO_EFFECTS}
                   onError={() => setHasCloudinaryError(true)}
                 />
 
+                {isLocked && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none z-10">
+                    <div className="p-3 rounded-full bg-black/60 border border-white/10 text-white/80 shadow-lg backdrop-blur-md">
+                      <Lock className="w-5 h-5" />
+                    </div>
+                  </div>
+                )}
+
                 {/* Guest Label */}
-                <div className="absolute top-2 left-2">
+                <div className="absolute top-2 left-2 z-10">
                   <span className="text-[10px] font-medium text-white bg-black/10 px-2.5 py-1 rounded-full border border-white/10">
                     {photo.isOwnPhoto ? "Moi" : photo.authorName}
                   </span>
@@ -281,7 +301,7 @@ export default function GalleryContent() {
 
       <Lightbox
         index={index}
-        open={index >= 0}
+        open={index >= 0 && !isLocked}
         close={() => setIndex(-1)}
         plugins={[LightboxDownload]}
         carousel={{ padding: 0, imageFit: "contain" }}
@@ -289,8 +309,8 @@ export default function GalleryContent() {
           const viewUrl = getCldImageUrl({
             src: photo.cloudinaryId,
             deliveryType: "upload",
-            width: 1200,
-            height: 1600,
+            width: 1080,
+            height: 1920,
             crop: "fill",
             effects: hasCloudinaryError ? [] : PHOTO_EFFECTS,
           });
