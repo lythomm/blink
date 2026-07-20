@@ -30,11 +30,14 @@ export function PWAInstallBanner() {
     const detectIOS = /iphone|ipad|ipod/.test(userAgent);
     setIsIOS(detectIOS);
 
+    // Disable the popup on iOS for now
+    /*
     if (detectIOS) {
       setIsInstallable(true);
       setDismissed(false);
       return;
     }
+    */
 
     // 4. Listen for beforeinstallprompt (Android/Chrome)
     const handleBeforeInstallPrompt = (e: Event) => {
