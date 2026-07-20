@@ -91,3 +91,47 @@ export const prettyDisplayDate = (
 
   return formatted.charAt(0).toUpperCase() + formatted.slice(1);
 };
+
+export const compressCanvasToBlob = async (
+  canvas: HTMLCanvasElement,
+  maxSizeInBytes: number = 500 * 1024,
+  mimeType: string = "image/webp",
+  initialQuality: number = 0.90,
+  minQuality: number = 0.60
+): Promise<Blob> => {
+  let quality = initialQuality;
+  let scale = 1.0;
+  let currentCanvas = canvas;
+
+  while (true) {
+    const blob = await new Promise<Blob | null>((resolve) => {
+      currentCanvas.toBlob((b) => resolve(b), mimeType, quality);
+    });
+
+    if (!blob) {
+      throw new Error("Failed to generate blob from canvas");
+    }
+
+    if (blob.size <= maxSizeInBytes) {
+      return blob;
+    }
+
+    if (quality > minQuality) {
+      quality -= 0.1;
+    } else if (scale > 0.4) {
+      scale -= 0.15;
+      const tempCanvas = document.createElement("canvas");
+      tempCanvas.width = Math.round(canvas.width * scale);
+      tempCanvas.height = Math.round(canvas.height * scale);
+      const ctx = tempCanvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+        currentCanvas = tempCanvas;
+      }
+      quality = initialQuality;
+    } else {
+      return blob;
+    }
+  }
+};
+
