@@ -9,7 +9,7 @@ export const getPhotos = query({
   handler: async (ctx, args) => {
     const photos = await ctx.db
       .query("photos")
-      .withIndex("by_event_and_guest", (q) => q.eq("eventId", args.eventId))
+      .withIndex("by_event", (q) => q.eq("eventId", args.eventId))
       .order("desc")
       .collect();
 
