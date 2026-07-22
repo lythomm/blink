@@ -13,23 +13,18 @@ export const getPhotos = query({
       .order("desc")
       .collect();
 
-    return Promise.all(
-      photos.map(async (photo) => {
-        const participant = await ctx.db
-          .query("participants")
-          .withIndex("by_event_and_guest", (q) =>
-            q.eq("eventId", args.eventId).eq("guestId", photo.guestId)
-          )
-          .unique();
-        
-        const { guestId, ...restPhoto } = photo;
-        return {
-          ...restPhoto,
-          isOwnPhoto: guestId === args.clientGuestId,
-          authorName: participant?.name || "Invité mystère",
-        };
-      })
-    );
+    const participants = await ctx.db
+      .query("participants")
+      .withIndex("by_event", (q) => q.eq("eventId", args.eventId))
+      .collect();
+
+    const participantMap = new Map(participants.map((p) => [p.guestId, p.name]));
+
+    return photos.map((photo) => ({
+      ...photo,
+      isOwnPhoto: photo.guestId === args.clientGuestId,
+      authorName: participantMap.get(photo.guestId) || "Invité mystère",
+    }));
   },
 });
 
