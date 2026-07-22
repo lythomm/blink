@@ -193,8 +193,8 @@ export default function GalleryContent() {
           onClick={() => router.push(`/event/${eventId}`)}
           disabled={timeLeft === "Cloturé"}
           className={`flex-[1.5] h-12 flex items-center justify-center gap-2 rounded-xl bg-white text-black text-[11px] font-bold uppercase tracking-widest transition-all cursor-pointer ${timeLeft === "Cloturé"
-              ? "opacity-50 cursor-not-allowed"
-              : "active:scale-95 shadow-[0_0_30px_rgba(255,255,255,0.1)]"
+            ? "opacity-50 cursor-not-allowed"
+            : "active:scale-95 shadow-[0_0_30px_rgba(255,255,255,0.1)]"
             }`}
         >
           <Camera className="w-4 h-4" />
@@ -349,12 +349,10 @@ export default function GalleryContent() {
             </p>
             <p>
               L&apos;app est encore au stade de{" "}
-              <span className="text-white font-medium">prototype</span>. Donc,
-              il est normal de rencontrer quelques bugs ou comportements
-              inattendus.
+              <span className="text-white font-medium">prototype</span>.
             </p>
             <p className="pt-2 border-t border-white/10">
-              Vos retours sont précieux ! N&apos;hésitez pas à me contacter si
+              Vos retours sont précieux ! N&apos;hésitez pas à m'en faire si
               vous rencontrez des problèmes ou si vous avez des suggestions :
             </p>
 
