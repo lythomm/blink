@@ -67,7 +67,7 @@ export default function CameraContent() {
     eventId,
     guestId,
   });
-  const photos = useQuery(api.photos.getPhotos, { eventId });
+  const photos = useQuery(api.photos.getPhotos, { eventId, clientGuestId: guestId });
   const event = useQuery(api.events.getEventById, { id: eventId });
 
   const lastPhotos = photos?.slice(0, 3) || [];

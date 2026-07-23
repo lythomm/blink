@@ -84,19 +84,53 @@ export default function GalleryContent() {
   };
 
   const filteredPhotos = useMemo(() => {
-    return photos?.filter((photo) => {
-      if (appliedGuestIds.length === 0) return true;
-      if (photo.isOwnPhoto && appliedGuestIds.includes("me")) return true;
-      return photo.guestId && appliedGuestIds.includes(photo.guestId);
+    if (!photos) return [];
+    if (appliedGuestIds.length === 0) return photos;
+    const appliedSet = new Set(appliedGuestIds);
+    const hasMe = appliedSet.has("me");
+    return photos.filter((photo) => {
+      if (photo.isOwnPhoto && hasMe) return true;
+      return photo.guestId && appliedSet.has(photo.guestId);
     });
   }, [photos, appliedGuestIds]);
 
+  const viewablePhotos = useMemo(() => {
+    if (!filteredPhotos) return [];
+    if (!isLocked) return filteredPhotos;
+    return filteredPhotos.filter((photo) => photo.isOwnPhoto);
+  }, [filteredPhotos, isLocked]);
+
+  const lightboxSlides = useMemo(() => {
+    return viewablePhotos.map((photo) => {
+      const viewUrl = getCldImageUrl({
+        src: photo.cloudinaryId,
+        deliveryType: "upload",
+        width: 1080,
+        height: 1920,
+        crop: "fill",
+        effects: hasCloudinaryError ? [] : PHOTO_EFFECTS,
+      });
+      const downloadUrl = getCldImageUrl({
+        src: photo.cloudinaryId,
+        deliveryType: "upload",
+        flags: ["attachment"],
+      });
+      return {
+        src: viewUrl,
+        download: downloadUrl,
+      };
+    });
+  }, [viewablePhotos, hasCloudinaryError]);
+
   const draftFilteredCount = useMemo(() => {
-    return photos?.filter((photo) => {
-      if (draftGuestIds.length === 0) return true;
-      if (photo.isOwnPhoto && draftGuestIds.includes("me")) return true;
-      return photo.guestId && draftGuestIds.includes(photo.guestId);
-    }).length ?? 0;
+    if (!photos) return 0;
+    if (draftGuestIds.length === 0) return photos.length;
+    const draftSet = new Set(draftGuestIds);
+    const hasMe = draftSet.has("me");
+    return photos.filter((photo) => {
+      if (photo.isOwnPhoto && hasMe) return true;
+      return photo.guestId && draftSet.has(photo.guestId);
+    }).length;
   }, [photos, draftGuestIds]);
 
   const uniqueAuthors = useMemo(() => {
@@ -332,53 +366,61 @@ export default function GalleryContent() {
       <section className="px-3 pt-3 pb-24 z-10">
         <div className="grid grid-cols-2 gap-2">
           <AnimatePresence mode="popLayout">
-            {filteredPhotos?.map((photo, idx) => (
-              <motion.div
-                key={photo._id}
-                layout
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: idx * 0.05, duration: 0.6 }}
-                className={`relative aspect-[3/4] rounded-2xl overflow-hidden group shadow-2xl border border-white/5 ${isLocked ? "cursor-default" : "cursor-zoom-in"
+            {filteredPhotos?.map((photo, idx) => {
+              const isPhotoLocked = isLocked && !photo.isOwnPhoto;
+              return (
+                <motion.div
+                  key={photo._id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: idx * 0.05, duration: 0.6 }}
+                  className={`relative aspect-[3/4] rounded-2xl overflow-hidden group shadow-2xl border border-white/5 ${
+                    isPhotoLocked ? "cursor-default" : "cursor-zoom-in"
                   }`}
-                onClick={() => {
-                  if (isLocked) {
-                    const time = timeLeft ? timeLeft.replace(" restants", "") : "quelques instants";
-                    toast.warning(`Photos prêtes dans ${time} ! 🤫`);
-                    return;
-                  }
-                  setIndex(idx);
-                }}
-              >
-                <CloudinaryImage
-                  src={photo.cloudinaryId}
-                  alt="Captured moment"
-                  fill
-                  aspectRatio="3:4"
-                  className={`object-cover transition-all duration-500 ${isLocked ? "blur-md scale-110 pointer-events-none select-none" : "group-hover:scale-105"
+                  onClick={() => {
+                    if (isPhotoLocked) {
+                      const time = timeLeft ? timeLeft.replace(" restants", "") : "quelques instants";
+                      toast.warning(`Photos prêtes dans ${time} ! 🤫`);
+                      return;
+                    }
+                    const viewIdx = viewablePhotos.findIndex((p) => p._id === photo._id);
+                    if (viewIdx !== -1) {
+                      setIndex(viewIdx);
+                    }
+                  }}
+                >
+                  <CloudinaryImage
+                    src={photo.cloudinaryId}
+                    alt="Captured moment"
+                    fill
+                    aspectRatio="3:4"
+                    className={`object-cover transition-all duration-500 ${
+                      isPhotoLocked ? "blur-md scale-110 pointer-events-none select-none" : "group-hover:scale-105"
                     }`}
-                  sizes="(max-width: 768px) 50vw, 33vw"
-                  priority={idx < 4}
-                  effects={hasCloudinaryError ? [] : PHOTO_EFFECTS}
-                  onError={() => setHasCloudinaryError(true)}
-                />
+                    sizes="(max-width: 768px) 50vw, 33vw"
+                    priority={idx < 4}
+                    effects={hasCloudinaryError ? [] : PHOTO_EFFECTS}
+                    onError={() => setHasCloudinaryError(true)}
+                  />
 
-                {isLocked && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none z-10">
-                    <div className="p-3 rounded-full bg-black/60 border border-white/10 text-white/80 shadow-lg backdrop-blur-md">
-                      <Lock className="w-5 h-5" />
+                  {isPhotoLocked && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none z-10">
+                      <div className="p-3 rounded-full bg-black/60 border border-white/10 text-white/80 shadow-lg backdrop-blur-md">
+                        <Lock className="w-5 h-5" />
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Guest Label */}
-                <div className="absolute top-2 left-2 z-10">
-                  <span className="text-[10px] font-medium text-white bg-black/10 px-2.5 py-1 rounded-full border border-white/10">
-                    {photo.isOwnPhoto ? "Moi" : photo.authorName}
-                  </span>
-                </div>
-              </motion.div>
-            ))}
+                  {/* Guest Label */}
+                  <div className="absolute top-2 left-2 z-10">
+                    <span className="text-[10px] font-medium text-white bg-black/10 px-2.5 py-1 rounded-full border border-white/10">
+                      {photo.isOwnPhoto ? "Moi" : photo.authorName}
+                    </span>
+                  </div>
+                </motion.div>
+              );
+            })}
           </AnimatePresence>
         </div>
 
@@ -415,29 +457,11 @@ export default function GalleryContent() {
 
       <Lightbox
         index={index}
-        open={index >= 0 && !isLocked}
+        open={index >= 0}
         close={() => setIndex(-1)}
         plugins={[LightboxDownload]}
         carousel={{ padding: 0, imageFit: "contain" }}
-        slides={filteredPhotos?.map((photo) => {
-          const viewUrl = getCldImageUrl({
-            src: photo.cloudinaryId,
-            deliveryType: "upload",
-            width: 1080,
-            height: 1920,
-            crop: "fill",
-            effects: hasCloudinaryError ? [] : PHOTO_EFFECTS,
-          });
-          const downloadUrl = getCldImageUrl({
-            src: photo.cloudinaryId,
-            deliveryType: "upload",
-            flags: ["attachment"],
-          });
-          return {
-            src: viewUrl,
-            download: downloadUrl,
-          };
-        })}
+        slides={lightboxSlides}
       />
 
       {/* About Button */}
