@@ -238,7 +238,9 @@ export default function GalleryContent() {
         });
       }
     }
-    return Array.from(map.values());
+    return Array.from(map.values()).sort((a, b) =>
+      a.name.localeCompare(b.name, "fr", { sensitivity: "base" })
+    );
   }, [photos]);
 
   useEffect(() => {
