@@ -44,15 +44,16 @@ export function Modal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
             onClick={onClose}
             className={`absolute inset-0 bg-black/80 backdrop-blur-sm ${onClose ? "cursor-pointer" : "cursor-default"}`}
           />
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className={`relative w-full ${maxWidthClass} bg-[#0D0D0D] border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl ${className}`}
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.96 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className={`relative w-full ${maxWidthClass} bg-[#0D0D0D] border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl will-change-transform ${className}`}
           >
             {onClose && (
               <button

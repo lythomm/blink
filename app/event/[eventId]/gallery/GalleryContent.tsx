@@ -26,8 +26,9 @@ import {
   Check,
 } from "lucide-react";
 import { Modal } from "@/app/components/Modal";
-import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect, useMemo } from "react";
+import { motion } from "framer-motion";
+import JSZip from "jszip";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 import LightboxDownload from "yet-another-react-lightbox/plugins/download";
@@ -66,9 +67,15 @@ export default function GalleryContent() {
   const [shareUrl, setShareUrl] = useState("");
   const [qrDataUrl, setQrDataUrl] = useState("");
   const [hasCloudinaryError, setHasCloudinaryError] = useState(false);
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+  const [isFilterFromDownload, setIsFilterFromDownload] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadCooldown, setDownloadCooldown] = useState(0);
+  const zipCacheRef = useRef<Map<string, Blob>>(new Map());
 
-  const handleOpenFilter = () => {
+  const handleOpenFilter = (fromDownload = false) => {
     setDraftGuestIds(appliedGuestIds);
+    setIsFilterFromDownload(fromDownload === true);
     setIsFilterOpen(true);
   };
 
@@ -81,6 +88,87 @@ export default function GalleryContent() {
   const handleApplyFilter = () => {
     setAppliedGuestIds(draftGuestIds);
     setIsFilterOpen(false);
+    if (isFilterFromDownload) {
+      setIsFilterFromDownload(false);
+      setIsDownloadModalOpen(true);
+    }
+  };
+
+  const handleOpenDownloadModal = () => {
+    if (isLocked) {
+      toast.warning("Téléchargement disponible à la fin de l'événement ! ⏳");
+      return;
+    }
+
+    if (!filteredPhotos || filteredPhotos.length === 0) {
+      toast.warning("Aucune photo à télécharger.");
+      return;
+    }
+
+    setIsDownloadModalOpen(true);
+  };
+
+  const startZipGeneration = async () => {
+    if (!filteredPhotos || filteredPhotos.length === 0) return;
+
+    const cacheKey = appliedGuestIds.length === 0 ? "all" : appliedGuestIds.slice().sort().join(",");
+    const safeEventName = event?.name
+      ? event.name.replace(/[^\w\s-]/gi, "").trim().replace(/\s+/g, "-")
+      : "event";
+    const zipFilename = `blink-${safeEventName}-${cacheKey}.zip`;
+
+    const triggerDownload = (blob: Blob, fileName: string) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    };
+
+    if (zipCacheRef.current.has(cacheKey)) {
+      const cachedBlob = zipCacheRef.current.get(cacheKey)!;
+      triggerDownload(cachedBlob, zipFilename);
+      setDownloadCooldown(Date.now() + 15000);
+      return;
+    }
+
+    setIsDownloading(true);
+    toast.warning("Préparation de l'archive ZIP en cours... 📦");
+
+    try {
+      const zip = new JSZip();
+      const folder = zip.folder(safeEventName) || zip;
+
+      const fetchPromises = filteredPhotos.map(async (photo, index) => {
+        const imageUrl = getCldImageUrl({
+          src: photo.cloudinaryId,
+          deliveryType: "upload",
+          quality: "auto",
+        });
+        const res = await fetch(imageUrl);
+        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+        const blob = await res.blob();
+        const author = photo.isOwnPhoto
+          ? "moi"
+          : photo.authorName.replace(/[^\w\s-]/gi, "").trim() || "invite";
+        folder.file(`photo-${index + 1}-${author}.jpg`, blob);
+      });
+
+      await Promise.all(fetchPromises);
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+
+      zipCacheRef.current.set(cacheKey, zipBlob);
+      triggerDownload(zipBlob, zipFilename);
+      setDownloadCooldown(Date.now() + 15000);
+    } catch (err) {
+      console.error("ZIP Generation error:", err);
+      toast.error("Erreur lors de la création de l'archive ZIP.");
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   const filteredPhotos = useMemo(() => {
@@ -308,7 +396,7 @@ export default function GalleryContent() {
 
           {/* Filter Pill Button */}
           <button
-            onClick={handleOpenFilter}
+            onClick={() => handleOpenFilter(false)}
             className="relative w-14 h-14 rounded-2xl bg-neutral-900/90 border border-white/10 backdrop-blur-xl flex items-center justify-center text-white/90 transition-all active:scale-95 cursor-pointer hover:bg-neutral-800"
             title="Filtrer par utilisateur"
           >
@@ -331,13 +419,25 @@ export default function GalleryContent() {
 
           {/* Download Pill Button */}
           <button
-            onClick={() => {
-              toast.warning("Téléchargement bientôt disponible");
-            }}
-            className="w-14 h-14 rounded-2xl bg-neutral-900/90 border border-white/10 backdrop-blur-xl flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer hover:bg-neutral-800"
-            title="Télécharger"
+            onClick={handleOpenDownloadModal}
+            disabled={isDownloading}
+            className={`w-14 h-14 rounded-2xl bg-neutral-900/90 border border-white/10 backdrop-blur-xl flex items-center justify-center text-white transition-all cursor-pointer ${isLocked
+              ? "opacity-50"
+              : isDownloading
+                ? "opacity-75 cursor-wait"
+                : "active:scale-95 hover:bg-neutral-800"
+              }`}
+            title={
+              isLocked
+                ? "Téléchargement disponible à la fin de l'événement"
+                : "Télécharger les photos"
+            }
           >
-            <Download className="w-5 h-5 text-white/90" />
+            {isDownloading ? (
+              <Loader2 className="w-5 h-5 animate-spin text-white" />
+            ) : (
+              <Download className="w-5 h-5 text-white/90" />
+            )}
           </button>
         </div>
       </header>
@@ -365,61 +465,58 @@ export default function GalleryContent() {
       {/* Photo Grid */}
       <section className="px-3 pt-3 pb-24 z-10">
         <div className="grid grid-cols-2 gap-2">
-          <AnimatePresence mode="popLayout">
-            {filteredPhotos?.map((photo, idx) => {
-              const isPhotoLocked = isLocked && !photo.isOwnPhoto;
-              return (
-                <motion.div
-                  key={photo._id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: idx * 0.05, duration: 0.6 }}
-                  className={`relative aspect-[3/4] rounded-2xl overflow-hidden group shadow-2xl border border-white/5 ${isPhotoLocked ? "cursor-default" : "cursor-zoom-in"
+          {filteredPhotos?.map((photo, idx) => {
+            const isPhotoLocked = isLocked && !photo.isOwnPhoto;
+            return (
+              <motion.div
+                key={photo._id}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2 }}
+                className={`relative aspect-[3/4] rounded-2xl overflow-hidden group shadow-2xl border border-white/5 will-change-transform ${isPhotoLocked ? "cursor-default" : "cursor-zoom-in"
+                  }`}
+                onClick={() => {
+                  if (isPhotoLocked) {
+                    const time = timeLeft ? timeLeft.replace(" restants", "") : "quelques instants";
+                    toast.warning(`Photos prêtes dans ${time} ! 🤫`);
+                    return;
+                  }
+                  const viewIdx = viewablePhotos.findIndex((p) => p._id === photo._id);
+                  if (viewIdx !== -1) {
+                    setIndex(viewIdx);
+                  }
+                }}
+              >
+                <CloudinaryImage
+                  src={photo.cloudinaryId}
+                  alt="Captured moment"
+                  fill
+                  aspectRatio="3:4"
+                  className={`object-cover transition-all duration-500 ${isPhotoLocked ? "blur-md scale-110 pointer-events-none select-none" : "group-hover:scale-105"
                     }`}
-                  onClick={() => {
-                    if (isPhotoLocked) {
-                      const time = timeLeft ? timeLeft.replace(" restants", "") : "quelques instants";
-                      toast.warning(`Photos prêtes dans ${time} ! 🤫`);
-                      return;
-                    }
-                    const viewIdx = viewablePhotos.findIndex((p) => p._id === photo._id);
-                    if (viewIdx !== -1) {
-                      setIndex(viewIdx);
-                    }
-                  }}
-                >
-                  <CloudinaryImage
-                    src={photo.cloudinaryId}
-                    alt="Captured moment"
-                    fill
-                    aspectRatio="3:4"
-                    className={`object-cover transition-all duration-500 ${isPhotoLocked ? "blur-md scale-110 pointer-events-none select-none" : "group-hover:scale-105"
-                      }`}
-                    sizes="(max-width: 768px) 50vw, 33vw"
-                    priority={idx < 4}
-                    effects={hasCloudinaryError ? [] : PHOTO_EFFECTS}
-                    onError={() => setHasCloudinaryError(true)}
-                  />
+                  sizes="(max-width: 768px) 50vw, 33vw"
+                  priority={idx < 4}
+                  effects={hasCloudinaryError ? [] : PHOTO_EFFECTS}
+                  onError={() => setHasCloudinaryError(true)}
+                />
 
-                  {isPhotoLocked && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none z-10">
-                      <div className="p-3 rounded-full bg-black/60 border border-white/10 text-white/80 shadow-lg backdrop-blur-md">
-                        <Lock className="w-5 h-5" />
-                      </div>
+                {isPhotoLocked && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none z-10">
+                    <div className="p-3 rounded-full bg-black/60 border border-white/10 text-white/80 shadow-lg backdrop-blur-md">
+                      <Lock className="w-5 h-5" />
                     </div>
-                  )}
-
-                  {/* Guest Label */}
-                  <div className="absolute top-2 left-2 z-10">
-                    <span className="text-[10px] font-medium text-white bg-black/10 px-2.5 py-1 rounded-full border border-white/10">
-                      {photo.isOwnPhoto ? "Moi" : photo.authorName}
-                    </span>
                   </div>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
+                )}
+
+                {/* Guest Label */}
+                <div className="absolute top-2 left-2 z-10">
+                  <span className="text-[10px] font-medium text-white bg-black/10 px-2.5 py-1 rounded-full border border-white/10">
+                    {photo.isOwnPhoto ? "Moi" : photo.authorName}
+                  </span>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
 
         {/* Loading / Empty States */}
@@ -674,8 +771,71 @@ export default function GalleryContent() {
             onClick={handleApplyFilter}
             className="w-full h-12 rounded-xl bg-white text-black text-[11px] font-bold uppercase tracking-widest transition-all hover:bg-white/90 active:scale-95 cursor-pointer shadow-[0_0_20px_rgba(255,255,255,0.1)]"
           >
-            Afficher les photos ({draftFilteredCount})
+            {isFilterFromDownload
+              ? `Retour au téléchargement (${draftFilteredCount})`
+              : `Afficher les photos (${draftFilteredCount})`}
           </button>
+        </div>
+      </Modal>
+
+      {/* Download Confirmation Modal */}
+      <Modal isOpen={isDownloadModalOpen} onClose={() => setIsDownloadModalOpen(false)}>
+        <div className="space-y-6 text-center">
+          <div>
+            <h2 className="text-2xl font-display text-white">Télécharger l'album</h2>
+            <p className="text-xs text-white/50 mt-1">
+              Vous allez télécharger les photos sélectionnées au format ZIP
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-white/60">Nombre de photos</span>
+              <span className="font-bold text-white text-base">
+                {filteredPhotos?.length ?? 0}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setIsDownloadModalOpen(false);
+                handleOpenFilter(true);
+              }}
+              className="w-full flex items-center justify-between text-sm pt-2.5 border-t border-white/10 cursor-pointer group text-left"
+            >
+              <span className="text-white/60 group-hover:text-white transition-colors">Filtre appliqué</span>
+              <span className="font-medium text-white text-xs bg-white/10 group-hover:bg-white/20 px-2.5 py-1 rounded-full border border-white/10 transition-colors">
+                {appliedGuestIds.length === 0
+                  ? "Toutes les photos"
+                  : appliedGuestIds.length === 1 && appliedGuestIds[0] === "me"
+                    ? "Mes photos"
+                    : `${appliedGuestIds.length} invité(s)`}
+              </span>
+            </button>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => {
+                setIsDownloadModalOpen(false);
+                startZipGeneration();
+              }}
+              className="w-full h-12 flex items-center justify-center gap-2 rounded-xl bg-white text-black text-[11px] font-bold uppercase tracking-widest transition-all hover:bg-white/90 active:scale-95 cursor-pointer shadow-[0_0_20px_rgba(255,255,255,0.1)]"
+            >
+              Télécharger
+            </button>
+
+            <button
+              onClick={() => {
+                setIsDownloadModalOpen(false);
+                handleOpenFilter(true);
+              }}
+              className="w-full h-12 flex items-center justify-center gap-2 rounded-xl bg-white/5 border border-white/10 text-[11px] font-bold uppercase tracking-widest text-white/80 transition-colors hover:bg-white/10 active:scale-95 cursor-pointer"
+            >
+              Modifier les filtres
+            </button>
+          </div>
         </div>
       </Modal>
 

@@ -115,13 +115,12 @@ function ToastComponent({
 
   return (
     <motion.div
-      layout
-      initial={{ opacity: 0, y: 15, scale: 0.95, x: 20 }}
-      animate={{ opacity: 1, y: 0, scale: 1, x: 0 }}
-      exit={{ opacity: 0, scale: 0.9, x: 10, transition: { duration: 0.15 } }}
-      transition={{ type: "spring", stiffness: 350, damping: 25 }}
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.15, ease: "easeOut" }}
       className={clsx(
-        "pointer-events-auto flex items-start gap-3 p-4 rounded-2xl bg-neutral-900/90 backdrop-blur-md border text-white/90 relative",
+        "pointer-events-auto flex items-start gap-3 p-4 rounded-2xl bg-neutral-900/95 border text-white/90 relative will-change-transform",
         borders[type],
       )}
     >
