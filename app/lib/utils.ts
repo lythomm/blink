@@ -94,44 +94,69 @@ export const prettyDisplayDate = (
 
 export const compressCanvasToBlob = async (
   canvas: HTMLCanvasElement,
-  maxSizeInBytes: number = 500 * 1024,
-  mimeType: string = "image/webp",
-  initialQuality: number = 0.90,
-  minQuality: number = 0.60
+  maxDimension: number = 1920,
+  quality: number = 0.82,
+  maxSizeBytes: number = 500 * 1024
 ): Promise<Blob> => {
-  let quality = initialQuality;
-  let scale = 1.0;
-  let currentCanvas = canvas;
-
-  while (true) {
-    const blob = await new Promise<Blob | null>((resolve) => {
-      currentCanvas.toBlob((b) => resolve(b), mimeType, quality);
+  const exportBlob = (c: HTMLCanvasElement, q: number) =>
+    new Promise<Blob>((resolve, reject) => {
+      c.toBlob(
+        (b) => (b ? resolve(b) : reject(new Error("Failed to export canvas blob"))),
+        "image/jpeg",
+        q
+      );
     });
 
-    if (!blob) {
-      throw new Error("Failed to generate blob from canvas");
-    }
+  let width = canvas.width;
+  let height = canvas.height;
 
-    if (blob.size <= maxSizeInBytes) {
-      return blob;
-    }
-
-    if (quality > minQuality) {
-      quality -= 0.1;
-    } else if (scale > 0.4) {
-      scale -= 0.15;
-      const tempCanvas = document.createElement("canvas");
-      tempCanvas.width = Math.round(canvas.width * scale);
-      tempCanvas.height = Math.round(canvas.height * scale);
-      const ctx = tempCanvas.getContext("2d");
-      if (ctx) {
-        ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
-        currentCanvas = tempCanvas;
-      }
-      quality = initialQuality;
+  if (width > maxDimension || height > maxDimension) {
+    if (width > height) {
+      height = Math.round((height * maxDimension) / width);
+      width = maxDimension;
     } else {
-      return blob;
+      width = Math.round((width * maxDimension) / height);
+      height = maxDimension;
     }
   }
+
+  const targetCanvas = document.createElement("canvas");
+  targetCanvas.width = width;
+  targetCanvas.height = height;
+  const ctx = targetCanvas.getContext("2d");
+  if (ctx) {
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(canvas, 0, 0, width, height);
+  }
+
+  const blob = await exportBlob(targetCanvas, quality);
+
+  // Garde-fou 100% : Si cas extrême (bruit visuel intense, confettis), passe de sécurité immédiate
+  if (blob.size > maxSizeBytes) {
+    const fallbackCanvas = document.createElement("canvas");
+    const fbMax = 1280;
+    let fbW = width;
+    let fbH = height;
+    if (fbW > fbMax || fbH > fbMax) {
+      if (fbW > fbH) {
+        fbH = Math.round((fbH * fbMax) / fbW);
+        fbW = fbMax;
+      } else {
+        fbW = Math.round((fbW * fbMax) / fbH);
+        fbH = fbMax;
+      }
+    }
+    fallbackCanvas.width = fbW;
+    fallbackCanvas.height = fbH;
+    const fbCtx = fallbackCanvas.getContext("2d");
+    if (fbCtx) {
+      fbCtx.imageSmoothingEnabled = true;
+      fbCtx.drawImage(targetCanvas, 0, 0, fbW, fbH);
+    }
+    return await exportBlob(fallbackCanvas, 0.70);
+  }
+
+  return blob;
 };
 
