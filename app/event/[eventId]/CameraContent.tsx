@@ -364,9 +364,9 @@ export default function CameraContent() {
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
       if (hours > 0) {
-        setTimeLeft(`${hours}h ${minutes}m restants`);
+        setTimeLeft(`${hours}h ${minutes}min restants`);
       } else {
-        setTimeLeft(`${minutes}m restants`);
+        setTimeLeft(`${minutes}min restants`);
       }
     };
 

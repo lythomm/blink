@@ -24,8 +24,16 @@ import { prettyDisplayDate } from "@/app/lib/utils";
 const formatTimeLeft = (endsAt: number) => {
   const diff = endsAt - Date.now();
   if (diff <= 0) return "Terminé";
+  const minutesTotal = Math.max(1, Math.floor(diff / (1000 * 60)));
+  if (minutesTotal < 60) {
+    return `Fin dans ${minutesTotal} min`;
+  }
   const hours = Math.floor(diff / (1000 * 60 * 60));
   if (hours < 24) {
+    const mins = minutesTotal % 60;
+    if (mins > 0) {
+      return `Fin dans ${hours}h ${mins}min`;
+    }
     return `Fin dans ${hours} heure${hours > 1 ? "s" : ""}`;
   }
   const days = Math.floor(hours / 24);

@@ -197,9 +197,9 @@ export default function GalleryContent() {
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
       if (hours > 0) {
-        setTimeLeft(`${hours}h ${minutes}m restants`);
+        setTimeLeft(`${hours}h ${minutes}min restants`);
       } else {
-        setTimeLeft(`${minutes}m restants`);
+        setTimeLeft(`${minutes}min restants`);
       }
     };
 
@@ -270,7 +270,7 @@ export default function GalleryContent() {
             {/* Remaining Time */}
             <div className="flex flex-col items-center">
               <span className="font-serif italic text-2xl text-white font-light">
-                {timeLeft ? timeLeft.replace(" restants", "") : "0m"}
+                {timeLeft ? timeLeft.replace(" restants", "") : "0min"}
               </span>
               <span className="text-[11px] text-white/50 font-sans tracking-wide mt-0.5">
                 Restant
