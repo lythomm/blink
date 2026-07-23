@@ -219,10 +219,10 @@ export default function GalleryContent() {
         {photos && photos.length > 0 && photos[0]?.cloudinaryId ? (
           <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
             <CloudinaryImage
-              src={photos[0].cloudinaryId}
+              src={photos[photos.length - 1].cloudinaryId}
               alt="Event cover background"
               fill
-              className="object-cover w-full h-full filter blur-xl scale-125 opacity-30"
+              className="object-cover w-full h-full filter"
             />
             <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/75 to-black" />
           </div>
@@ -256,7 +256,7 @@ export default function GalleryContent() {
           </h1>
 
           {/* Stat Row */}
-          <div className="grid grid-cols-3 gap-2 max-w-xs mx-auto items-center">
+          <div className="grid grid-cols-3 gap-2 mx-auto items-center">
             {/* Moments */}
             <div className="flex flex-col items-center">
               <span className="font-serif italic text-2xl text-white font-light">
@@ -269,7 +269,7 @@ export default function GalleryContent() {
 
             {/* Remaining Time */}
             <div className="flex flex-col items-center">
-              <span className="font-serif italic text-2xl text-white font-light">
+              <span className="font-serif italic text-2xl text-white font-light whitespace-nowrap">
                 {timeLeft ? timeLeft.replace(" restants", "") : "0min"}
               </span>
               <span className="text-[11px] text-white/50 font-sans tracking-wide mt-0.5">
@@ -299,8 +299,8 @@ export default function GalleryContent() {
             onClick={() => router.push(`/event/${eventId}`)}
             disabled={timeLeft === "Cloturé"}
             className={`flex-1 h-14 rounded-2xl bg-white text-black flex items-center justify-center transition-all cursor-pointer ${timeLeft === "Cloturé"
-                ? "opacity-50 cursor-not-allowed"
-                : "active:scale-95 shadow-[0_4px_25px_rgba(255,255,255,0.15)] hover:bg-white/95"
+              ? "opacity-50 cursor-not-allowed"
+              : "active:scale-95 shadow-[0_4px_25px_rgba(255,255,255,0.15)] hover:bg-white/95"
               }`}
           >
             <Camera className="w-6 h-6 text-black" />
@@ -375,9 +375,8 @@ export default function GalleryContent() {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: idx * 0.05, duration: 0.6 }}
-                  className={`relative aspect-[3/4] rounded-2xl overflow-hidden group shadow-2xl border border-white/5 ${
-                    isPhotoLocked ? "cursor-default" : "cursor-zoom-in"
-                  }`}
+                  className={`relative aspect-[3/4] rounded-2xl overflow-hidden group shadow-2xl border border-white/5 ${isPhotoLocked ? "cursor-default" : "cursor-zoom-in"
+                    }`}
                   onClick={() => {
                     if (isPhotoLocked) {
                       const time = timeLeft ? timeLeft.replace(" restants", "") : "quelques instants";
@@ -395,9 +394,8 @@ export default function GalleryContent() {
                     alt="Captured moment"
                     fill
                     aspectRatio="3:4"
-                    className={`object-cover transition-all duration-500 ${
-                      isPhotoLocked ? "blur-md scale-110 pointer-events-none select-none" : "group-hover:scale-105"
-                    }`}
+                    className={`object-cover transition-all duration-500 ${isPhotoLocked ? "blur-md scale-110 pointer-events-none select-none" : "group-hover:scale-105"
+                      }`}
                     sizes="(max-width: 768px) 50vw, 33vw"
                     priority={idx < 4}
                     effects={hasCloudinaryError ? [] : PHOTO_EFFECTS}
@@ -592,8 +590,8 @@ export default function GalleryContent() {
             <button
               onClick={() => setDraftGuestIds([])}
               className={`px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${draftGuestIds.length === 0
-                  ? "bg-white text-black border-white font-medium"
-                  : "bg-white/5 border-white/10 text-white/60 hover:text-white"
+                ? "bg-white text-black border-white font-medium"
+                : "bg-white/5 border-white/10 text-white/60 hover:text-white"
                 }`}
             >
               Tout afficher ({photos?.length ?? 0})
@@ -617,8 +615,8 @@ export default function GalleryContent() {
                 <button
                   onClick={() => toggleDraftGuestId("me")}
                   className={`w-full p-3.5 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${isSelected
-                      ? "bg-white text-black border-white font-medium shadow-md"
-                      : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
+                    ? "bg-white text-black border-white font-medium shadow-md"
+                    : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
                     }`}
                 >
                   <div className="flex items-center gap-3">
@@ -652,8 +650,8 @@ export default function GalleryContent() {
                     key={author.guestId}
                     onClick={() => toggleDraftGuestId(author.guestId)}
                     className={`w-full p-3.5 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${isSelected
-                        ? "bg-white text-black border-white font-medium shadow-md"
-                        : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
+                      ? "bg-white text-black border-white font-medium shadow-md"
+                      : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
                       }`}
                   >
                     <div className="flex items-center gap-3">
